@@ -271,6 +271,163 @@ curl http://localhost:8080/api/appointments/patient/1
 ]
 ```
 
+### 7. Create Patient Account (UC-02)
+
+**POST** `/api/patients`
+
+Create a new patient account in the system.
+
+**Request Body:**
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "phone": "1234567890",
+  "digitalHealthCardNumber": "DHC12345",
+  "address": "123 Main St, City",
+  "dateOfBirth": "1990-01-01",
+  "emergencyContactName": "Jane Doe",
+  "emergencyContactPhone": "0987654321",
+  "medicalHistory": "No major health issues",
+  "bloodType": "O+",
+  "allergies": "None"
+}
+```
+
+**Example:**
+```bash
+curl -X POST http://localhost:8080/api/patients \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "John Doe",
+    "email": "john@example.com",
+    "phone": "1234567890",
+    "digitalHealthCardNumber": "DHC12345",
+    "address": "123 Main St",
+    "dateOfBirth": "1990-01-01"
+  }'
+```
+
+**Response:**
+```json
+{
+  "id": 1,
+  "name": "John Doe",
+  "email": "john@example.com",
+  "phone": "1234567890",
+  "digitalHealthCardNumber": "DHC12345",
+  "address": "123 Main St",
+  "dateOfBirth": "1990-01-01",
+  "emergencyContactName": "Jane Doe",
+  "emergencyContactPhone": "0987654321",
+  "medicalHistory": "No major health issues",
+  "bloodType": "O+",
+  "allergies": "None"
+}
+```
+
+### 8. Get Patient Profile (UC-02)
+
+**GET** `/api/patients/{patientId}`
+
+Retrieve complete patient profile information.
+
+**Example:**
+```bash
+curl http://localhost:8080/api/patients/1
+```
+
+**Response:**
+```json
+{
+  "id": 1,
+  "name": "John Doe",
+  "email": "john@example.com",
+  "phone": "1234567890",
+  "digitalHealthCardNumber": "DHC12345",
+  "address": "123 Main St",
+  "dateOfBirth": "1990-01-01",
+  "emergencyContactName": "Jane Doe",
+  "emergencyContactPhone": "0987654321",
+  "medicalHistory": "No major health issues",
+  "bloodType": "O+",
+  "allergies": "None"
+}
+```
+
+### 9. Get All Patients (UC-02)
+
+**GET** `/api/patients`
+
+Get all patient profiles in the system.
+
+**Example:**
+```bash
+curl http://localhost:8080/api/patients
+```
+
+### 10. Update Patient Profile (UC-02)
+
+**PUT** `/api/patients/{patientId}`
+
+Update patient account information. Only provided fields will be updated.
+
+**Request Body:**
+```json
+{
+  "name": "John Updated",
+  "phone": "9999999999",
+  "address": "456 New St",
+  "emergencyContactName": "Jane Updated",
+  "emergencyContactPhone": "1111111111",
+  "medicalHistory": "Updated medical history",
+  "bloodType": "O+",
+  "allergies": "Peanuts"
+}
+```
+
+**Example:**
+```bash
+curl -X PUT http://localhost:8080/api/patients/1 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "John Updated",
+    "phone": "9999999999",
+    "address": "456 New St"
+  }'
+```
+
+**Response:**
+```json
+{
+  "id": 1,
+  "name": "John Updated",
+  "email": "john@example.com",
+  "phone": "9999999999",
+  "digitalHealthCardNumber": "DHC12345",
+  "address": "456 New St",
+  "dateOfBirth": "1990-01-01",
+  "emergencyContactName": "Jane Updated",
+  "emergencyContactPhone": "1111111111",
+  "medicalHistory": "Updated medical history",
+  "bloodType": "O+",
+  "allergies": "Peanuts"
+}
+```
+
+### 11. Delete Patient Account (UC-02)
+
+**DELETE** `/api/patients/{patientId}`
+
+Delete a patient account from the system.
+
+**Example:**
+```bash
+curl -X DELETE http://localhost:8080/api/patients/1
+```
+
+**Response:** 204 No Content
+
 ## Data Models
 
 ### Patient
@@ -279,6 +436,13 @@ curl http://localhost:8080/api/appointments/patient/1
 - `email`: Email address (unique)
 - `phone`: Phone number
 - `digitalHealthCardNumber`: Unique health card number
+- `address`: Patient's address (optional)
+- `dateOfBirth`: Patient's date of birth (optional)
+- `emergencyContactName`: Emergency contact name (optional)
+- `emergencyContactPhone`: Emergency contact phone (optional)
+- `medicalHistory`: Patient's medical history (optional)
+- `bloodType`: Patient's blood type (optional)
+- `allergies`: Patient's allergies (optional)
 
 ### Healthcare Provider
 - `id`: Unique identifier
@@ -305,6 +469,14 @@ curl http://localhost:8080/api/appointments/patient/1
 - `transactionId`: Unique transaction identifier
 - `paymentMethod`: Payment method used
 - `paymentDateTime`: When payment was processed
+
+### AuditLog
+- `id`: Unique identifier
+- `patientId`: Patient reference
+- `action`: Action performed (CREATE_ACCOUNT, UPDATE_PROFILE, DELETE_ACCOUNT)
+- `details`: Detailed description of changes
+- `timestamp`: When the action was performed
+- `ipAddress`: IP address from which the action was performed (optional)
 
 ## Sample Data
 

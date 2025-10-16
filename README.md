@@ -20,9 +20,11 @@ The API will be available at `http://localhost:8080`
 - ✅ View real-time available time slots
 - ✅ Book appointments (free for government, paid for private hospitals)
 - ✅ Process payments for private appointments
+- ✅ Manage patient accounts (create, read, update, delete)
+- ✅ Audit logging for all patient account changes
 - ✅ Concurrent booking protection (no double-booking)
 - ✅ Full CORS support (no authentication required)
-- ✅ 21 comprehensive tests (100% passing)
+- ✅ 43 comprehensive tests (100% passing)
 
 ## Example Usage
 
@@ -51,9 +53,9 @@ See [API_DOCUMENTATION.md](API_DOCUMENTATION.md) for complete API reference and 
 
 ## Testing
 
-All 21 tests passing:
-- 11 unit tests (service layer)
-- 9 integration tests (API layer)
+All 43 tests passing:
+- 22 unit tests (service layer - AppointmentService: 11, PatientService: 11)
+- 20 integration tests (API layer - AppointmentController: 9, PatientController: 11)
 - Manual testing verified
 
 ## Sample Data
@@ -65,6 +67,7 @@ The application initializes with:
 
 ## API Endpoints
 
+### Appointment Management (UC-01)
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/appointments/providers` | List all providers (optional: filter by specialty) |
@@ -73,6 +76,15 @@ The application initializes with:
 | POST | `/api/appointments/payment` | Process payment for private appointment |
 | GET | `/api/appointments/confirmation/{number}` | Get appointment by confirmation number |
 | GET | `/api/appointments/patient/{id}` | Get all appointments for a patient |
+
+### Patient Account Management (UC-02)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/patients` | Create a new patient account |
+| GET | `/api/patients/{id}` | Get patient profile details |
+| GET | `/api/patients` | Get all patient profiles |
+| PUT | `/api/patients/{id}` | Update patient profile |
+| DELETE | `/api/patients/{id}` | Delete patient account |
 
 ## H2 Database Console
 
