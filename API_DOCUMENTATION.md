@@ -1311,8 +1311,8 @@ curl -X POST http://localhost:8080/api/admin/providers/1/timeslots \
 ```
 
 **Notes:**
-- Time slots are automatically set to `available: true` if not specified
-- Times should be in ISO 8601 format
+- If `available` field is omitted from the request, it defaults to `true`
+- Times should be in ISO 8601 format (YYYY-MM-DDTHH:mm:ss)
 
 #### 6. Get Provider Time Slots
 
