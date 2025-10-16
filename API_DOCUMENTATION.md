@@ -572,6 +572,250 @@ src/
         └── service/          # Unit tests
 ```
 
+### 12. Generate Statistical Report (UC-03)
+
+**GET** `/api/reports`
+
+Generate a comprehensive statistical report with KPIs, daily visits breakdown, and department statistics.
+
+**Query Parameters:**
+- `hospital` (optional): Filter by hospital name
+- `department` (optional): Filter by department/specialty
+- `startDate` (optional): Start date in ISO format (YYYY-MM-DD)
+- `endDate` (optional): End date in ISO format (YYYY-MM-DD)
+- `reportType` (optional): Type of report
+- `granularity` (optional): Data granularity (DAILY, WEEKLY, MONTHLY)
+
+**Example:**
+```bash
+# Get report without filters (last 30 days)
+curl http://localhost:8080/api/reports
+
+# Get report for specific hospital
+curl "http://localhost:8080/api/reports?hospital=City%20Hospital"
+
+# Get report for specific department
+curl "http://localhost:8080/api/reports?department=Cardiology"
+
+# Get report with date range
+curl "http://localhost:8080/api/reports?startDate=2025-10-01&endDate=2025-10-16"
+
+# Get report with multiple filters
+curl "http://localhost:8080/api/reports?hospital=City%20Hospital&department=Cardiology&startDate=2025-10-01&endDate=2025-10-16"
+```
+
+**Response:**
+```json
+{
+  "kpis": {
+    "totalVisits": 150,
+    "confirmedAppointments": 120,
+    "pendingPayments": 15,
+    "cancelledAppointments": 15,
+    "totalRevenue": 15000.00,
+    "averageWaitTime": 48.5,
+    "appointmentCompletionRate": 80.0
+  },
+  "dailyVisits": [
+    {
+      "date": "2025-10-01",
+      "visitCount": 10,
+      "confirmedCount": 8,
+      "cancelledCount": 2
+    },
+    {
+      "date": "2025-10-02",
+      "visitCount": 12,
+      "confirmedCount": 10,
+      "cancelledCount": 2
+    }
+  ],
+  "departmentBreakdowns": [
+    {
+      "department": "Cardiology",
+      "totalAppointments": 50,
+      "confirmedAppointments": 42,
+      "revenue": 5000.00,
+      "completionRate": 84.0
+    },
+    {
+      "department": "Dermatology",
+      "totalAppointments": 40,
+      "confirmedAppointments": 32,
+      "revenue": 4000.00,
+      "completionRate": 80.0
+    }
+  ],
+  "filters": {
+    "hospital": "City Hospital",
+    "department": "Cardiology",
+    "startDate": "2025-10-01",
+    "endDate": "2025-10-16",
+    "reportType": null,
+    "granularity": null
+  },
+  "generatedAt": "2025-10-16T14:42:00"
+}
+```
+
+**Response (No Data):**
+```json
+{
+  "kpis": {
+    "totalVisits": 0,
+    "confirmedAppointments": 0,
+    "pendingPayments": 0,
+    "cancelledAppointments": 0,
+    "totalRevenue": 0,
+    "averageWaitTime": 0,
+    "appointmentCompletionRate": 0.0
+  },
+  "dailyVisits": [],
+  "departmentBreakdowns": [],
+  "filters": {
+    "hospital": null,
+    "department": null,
+    "startDate": "2025-11-01",
+    "endDate": "2025-11-30"
+  },
+  "generatedAt": "2025-10-16T14:42:00",
+  "message": "No data available for the selected filters and date range"
+}
+```
+
+### 13. Export Report (UC-03)
+
+**POST** `/api/reports/export`
+
+Export a report in PDF or CSV format with the specified filters.
+
+**Request Body:**
+```json
+{
+  "format": "PDF",
+  "filters": {
+    "hospital": "City Hospital",
+    "department": "Cardiology",
+    "startDate": "2025-10-01",
+    "endDate": "2025-10-16"
+  }
+}
+```
+
+**Supported Formats:**
+- `PDF` (default): Generates a formatted PDF report
+- `CSV`: Generates a CSV file with report data
+
+**Example:**
+```bash
+# Export as PDF
+curl -X POST http://localhost:8080/api/reports/export \
+  -H "Content-Type: application/json" \
+  -d '{
+    "format": "PDF",
+    "filters": {
+      "startDate": "2025-10-01",
+      "endDate": "2025-10-16"
+    }
+  }' \
+  --output report.pdf
+
+# Export as CSV
+curl -X POST http://localhost:8080/api/reports/export \
+  -H "Content-Type: application/json" \
+  -d '{
+    "format": "CSV",
+    "filters": {
+      "hospital": "City Hospital",
+      "startDate": "2025-10-01",
+      "endDate": "2025-10-16"
+    }
+  }' \
+  --output report.csv
+```
+
+**Response:**
+- **Content-Type:** `application/pdf` or `text/csv`
+- **Content-Disposition:** `attachment; filename="report_<timestamp>.pdf"`
+- **Body:** Binary PDF data or CSV text
+
+**CSV Format Example:**
+```csv
+Healthcare Statistical Report
+Generated: 2025-10-16T14:42:00
+
+Key Performance Indicators
+Total Visits,150
+Confirmed Appointments,120
+Pending Payments,15
+Cancelled Appointments,15
+Total Revenue,15000.00
+Average Wait Time (hours),48.5
+Completion Rate (%),80.0
+
+Department Breakdown
+Department,Total Appointments,Confirmed Appointments,Revenue,Completion Rate (%)
+Cardiology,50,42,5000.00,84.0
+Dermatology,40,32,4000.00,80.0
+
+Daily Visits
+Date,Total Visits,Confirmed,Cancelled
+2025-10-01,10,8,2
+2025-10-02,12,10,2
+```
+
+**PDF Format:**
+The PDF export includes:
+- Report title and generation timestamp
+- Applied filters section
+- Key Performance Indicators in readable format
+- Department Breakdown table with all metrics
+- Professional formatting and layout
+
+## Report Features (UC-03)
+
+### Key Performance Indicators (KPIs)
+- **Total Visits:** Total number of appointments in the date range
+- **Confirmed Appointments:** Number of successfully confirmed appointments
+- **Pending Payments:** Number of appointments awaiting payment
+- **Cancelled Appointments:** Number of cancelled appointments
+- **Total Revenue:** Sum of all completed payments
+- **Average Wait Time:** Average time (in hours) between booking and appointment
+- **Completion Rate:** Percentage of confirmed appointments out of total visits
+
+### Daily Visits Breakdown
+Shows day-by-day statistics including:
+- Visit count per day
+- Number of confirmed appointments per day
+- Number of cancelled appointments per day
+
+### Department Breakdown
+Shows statistics grouped by medical specialty/department:
+- Total appointments per department
+- Confirmed appointments per department
+- Revenue generated per department
+- Completion rate per department
+
+### Filtering Options
+Reports can be filtered by:
+- **Hospital:** Filter by specific hospital name
+- **Department:** Filter by medical specialty (e.g., Cardiology, Dermatology)
+- **Date Range:** Filter by start and end dates
+- **Multiple Filters:** Combine hospital, department, and date range filters
+
+### Edge Cases Handled
+- **No Data Available:** Returns appropriate message when no data matches filters
+- **Large Result Sets:** Efficiently handles large datasets with pagination in mind
+- **Export Failures:** Tracks failed exports and provides error messages
+- **Invalid Filters:** Gracefully handles invalid or missing filter parameters
+
+### Audit Trail
+All report exports are logged in the system with:
+- Export format (PDF/CSV)
+- Export timestamp
+- Filter parameters used
+- Export status (COMPLETED/FAILED)
+
 ## Future Enhancements
 
 Potential improvements for production:
@@ -581,9 +825,12 @@ Potential improvements for production:
 - Integrate with real payment gateway
 - Add appointment reminders
 - Implement waiting list for fully booked slots
-- Add audit logging
 - Add rate limiting
 - Implement caching for frequently accessed data
+- Add scheduled report generation
+- Add report sharing functionality via email
+- Implement chart visualizations in reports
+- Add comparative analytics (month-over-month, year-over-year)
 
 ## License
 

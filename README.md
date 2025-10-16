@@ -23,8 +23,11 @@ The API will be available at `http://localhost:8080`
 - ✅ Manage patient accounts (create, read, update, delete)
 - ✅ Audit logging for all patient account changes
 - ✅ Concurrent booking protection (no double-booking)
+- ✅ Generate statistical reports with KPIs and analytics
+- ✅ Export reports as PDF or CSV
+- ✅ Filter reports by hospital, department, and date range
 - ✅ Full CORS support (no authentication required)
-- ✅ 43 comprehensive tests (100% passing)
+- ✅ 72 comprehensive tests (100% passing)
 
 ## Example Usage
 
@@ -49,13 +52,14 @@ See [API_DOCUMENTATION.md](API_DOCUMENTATION.md) for complete API reference and 
 - Spring Data JPA
 - H2 Database
 - Lombok
+- iText 7 (PDF generation)
 - JUnit 5 & Mockito
 
 ## Testing
 
-All 43 tests passing:
-- 22 unit tests (service layer - AppointmentService: 11, PatientService: 11)
-- 20 integration tests (API layer - AppointmentController: 9, PatientController: 11)
+All 72 tests passing:
+- 35 unit tests (service layer - AppointmentService: 11, PatientService: 11, ReportService: 13)
+- 36 integration tests (API layer - AppointmentController: 9, PatientController: 11, ReportController: 16)
 - Manual testing verified
 
 ## Sample Data
@@ -85,6 +89,12 @@ The application initializes with:
 | GET | `/api/patients` | Get all patient profiles |
 | PUT | `/api/patients/{id}` | Update patient profile |
 | DELETE | `/api/patients/{id}` | Delete patient account |
+
+### Statistical Reports (UC-03)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/reports` | Generate statistical report with filters (hospital, department, date range) |
+| POST | `/api/reports/export` | Export report as PDF or CSV |
 
 ## H2 Database Console
 
