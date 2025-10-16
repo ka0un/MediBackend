@@ -31,12 +31,33 @@ The API will be available at `http://localhost:8080`
 - ✅ **NEW: Add prescriptions and treatment notes**
 - ✅ **NEW: Download medical records as PDF**
 - ✅ **NEW: Complete audit trail of medical record access**
+- ✅ **NEW: User authentication with admin and patient roles**
+- ✅ **NEW: Patient registration system**
+- ✅ **NEW: Admin dashboard with full management capabilities**
 - ✅ Full CORS support (no authentication required)
-- ✅ 94 comprehensive tests (100% passing)
+- ✅ 125 comprehensive tests (100% passing)
 
 ## Example Usage
 
 ```bash
+# Register a new patient
+curl -X POST http://localhost:8080/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username":"patient1","password":"password123","name":"John Doe","email":"john@test.com","phone":"1234567890","digitalHealthCardNumber":"DHC-001"}'
+
+# Login as admin
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin"}'
+
+# Login as patient
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"john.doe","password":"password123"}'
+
+# Get admin dashboard
+curl http://localhost:8080/api/admin/dashboard
+
 # Get all providers
 curl http://localhost:8080/api/appointments/providers
 
@@ -50,6 +71,8 @@ curl -X POST http://localhost:8080/api/appointments/book \
 
 See [API_DOCUMENTATION.md](API_DOCUMENTATION.md) for complete API reference and detailed usage examples.
 
+See [FRONTEND_CHANGES.md](FRONTEND_CHANGES.md) for comprehensive frontend implementation guide including all new authentication endpoints and UI requirements.
+
 ## Tech Stack
 
 - Java 17
@@ -62,28 +85,49 @@ See [API_DOCUMENTATION.md](API_DOCUMENTATION.md) for complete API reference and 
 
 ## Testing
 
-All 94 tests passing:
-- 44 unit tests (service layer)
+All 125 tests passing:
+- 57 unit tests (service layer)
   - AppointmentService: 11 tests
   - PatientService: 11 tests
   - ReportService: 12 tests
   - MedicalRecordService: 10 tests
-- 49 integration tests (API layer)
+  - AuthService: 13 tests (NEW)
+- 67 integration tests (API layer)
   - AppointmentController: 9 tests
   - PatientController: 11 tests
   - ReportController: 15 tests
   - MedicalRecordController: 14 tests
+  - AuthController: 8 tests (NEW)
+  - AdminController: 10 tests (NEW)
 - 1 application context test
 - Manual testing verified
 
 ## Sample Data
 
 The application initializes with:
-- 2 Patients
+- 1 Admin User (username: admin, password: admin)
+- 2 Patient Users (john.doe/password123, jane.smith/password123)
+- 2 Patients with complete medical records
 - 4 Healthcare Providers (2 Government, 2 Private)
 - 20 Available Time Slots
 
 ## API Endpoints
+
+### Authentication (NEW)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/register` | Register a new patient account |
+| POST | `/api/auth/login` | Login (admin or patient) |
+| POST | `/api/auth/logout` | Logout |
+
+### Admin Dashboard (NEW)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/admin/dashboard` | Get admin dashboard with stats and recent data |
+| GET | `/api/admin/patients` | Get all registered patients |
+| GET | `/api/admin/appointments` | Get all appointments |
+| DELETE | `/api/admin/patients/{id}` | Delete a patient account |
+| DELETE | `/api/admin/appointments/{id}` | Cancel an appointment |
 
 ### Appointment Management (UC-01)
 | Method | Endpoint | Description |
