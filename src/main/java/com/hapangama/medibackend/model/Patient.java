@@ -3,7 +3,9 @@ package com.hapangama.medibackend.model;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.time.LocalDate;
 
@@ -11,7 +13,8 @@ import java.time.LocalDate;
 @Table(name = "patients")
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
+@ToString(exclude = {"medications", "prescriptions", "testResults", "vaccinations"})
+@EqualsAndHashCode(exclude = {"medications", "prescriptions", "testResults", "vaccinations"})
 public class Patient {
 
     @Id
@@ -45,4 +48,16 @@ public class Patient {
     private String bloodType;
 
     private String allergies;
+
+    @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<Medication> medications;
+
+    @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<Prescription> prescriptions;
+
+    @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<TestResult> testResults;
+
+    @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<Vaccination> vaccinations;
 }
