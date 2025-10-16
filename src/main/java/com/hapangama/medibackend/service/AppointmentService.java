@@ -137,6 +137,27 @@ public class AppointmentService {
                 .collect(Collectors.toList());
     }
 
+    public List<AppointmentResponse> getAllAppointments() {
+        return appointmentRepository.findAll().stream()
+                .map(this::mapToAppointmentResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void cancelAppointment(Long appointmentId) {
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new RuntimeException("Appointment not found"));
+        
+        // Mark time slot as available again
+        TimeSlot timeSlot = appointment.getTimeSlot();
+        timeSlot.setAvailable(true);
+        timeSlotRepository.save(timeSlot);
+        
+        // Update appointment status
+        appointment.setStatus(Appointment.AppointmentStatus.CANCELLED);
+        appointmentRepository.save(appointment);
+    }
+
     private String generateConfirmationNumber() {
         return "APT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }

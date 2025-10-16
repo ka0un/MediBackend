@@ -10,4 +10,7 @@ import java.util.Optional;
 public interface PatientRepository extends JpaRepository<Patient, Long> {
     Optional<Patient> findByDigitalHealthCardNumber(String digitalHealthCardNumber);
     Optional<Patient> findByEmail(String email);
+    Optional<Patient> findByUser(com.hapangama.medibackend.model.User user);
+    boolean existsByEmail(String email);
+    boolean existsByDigitalHealthCardNumber(String digitalHealthCardNumber);
 }

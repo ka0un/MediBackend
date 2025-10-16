@@ -4,6 +4,7 @@ import com.hapangama.medibackend.model.*;
 import com.hapangama.medibackend.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -20,6 +21,8 @@ public class DataInitializer implements CommandLineRunner {
     private final PrescriptionRepository prescriptionRepository;
     private final TestResultRepository testResultRepository;
     private final VaccinationRepository vaccinationRepository;
+    private final UserRepository userRepository;
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Override
     public void run(String... args) {
@@ -27,8 +30,25 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeData() {
+        // Create admin user
+        User adminUser = new User();
+        adminUser.setUsername("admin");
+        adminUser.setPassword(passwordEncoder.encode("admin"));
+        adminUser.setRole(User.Role.ADMIN);
+        adminUser.setActive(true);
+        adminUser = userRepository.save(adminUser);
+
+        // Create user for patient 1
+        User user1 = new User();
+        user1.setUsername("john.doe");
+        user1.setPassword(passwordEncoder.encode("password123"));
+        user1.setRole(User.Role.PATIENT);
+        user1.setActive(true);
+        user1 = userRepository.save(user1);
+
         // Create sample patients with complete information
         Patient patient1 = new Patient();
+        patient1.setUser(user1);
         patient1.setName("John Doe");
         patient1.setEmail("john.doe@example.com");
         patient1.setPhone("+1234567890");
@@ -42,7 +62,16 @@ public class DataInitializer implements CommandLineRunner {
         patient1.setEmergencyContactPhone("+1234567899");
         patient1 = patientRepository.save(patient1);
 
+        // Create user for patient 2
+        User user2 = new User();
+        user2.setUsername("jane.smith");
+        user2.setPassword(passwordEncoder.encode("password123"));
+        user2.setRole(User.Role.PATIENT);
+        user2.setActive(true);
+        user2 = userRepository.save(user2);
+
         Patient patient2 = new Patient();
+        patient2.setUser(user2);
         patient2.setName("Jane Smith");
         patient2.setEmail("jane.smith@example.com");
         patient2.setPhone("+1234567891");
@@ -101,6 +130,8 @@ public class DataInitializer implements CommandLineRunner {
         initializeMedicalRecords(patient2, privateProvider1);
 
         System.out.println("Sample data initialized successfully!");
+        System.out.println("- Admin user created (username: admin, password: admin)");
+        System.out.println("- 2 Patient users created (john.doe/password123, jane.smith/password123)");
         System.out.println("- 2 Patients created with complete medical records");
         System.out.println("- 4 Healthcare Providers created (2 Government, 2 Private)");
         System.out.println("- 20 Time Slots created");
