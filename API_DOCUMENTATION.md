@@ -1,17 +1,39 @@
-# MediBackend - Appointment Booking System
+# MediBackend - Healthcare Management System
 
 ## Overview
-This is a Spring Boot application implementing UC-01: Book Appointment use case for a healthcare appointment booking system. The system supports booking appointments with healthcare providers at both government hospitals (free) and private hospitals (requiring payment).
+This is a comprehensive Spring Boot application implementing multiple healthcare management use cases including appointment booking, patient account management, statistical reporting, and medical records access. The system supports booking appointments with healthcare providers at both government hospitals (free) and private hospitals (requiring payment), managing patient profiles, generating analytics reports, and accessing comprehensive medical records.
 
 ## Features Implemented
 
-### Core Functionality
+### UC-01: Appointment Booking
 - Browse healthcare providers by specialty
 - View real-time availability of time slots
 - Book appointments (free for government hospitals, paid for private hospitals)
 - Process payments for private hospital appointments
 - View appointment confirmation and details
 - Concurrent booking protection (prevents double-booking of time slots)
+
+### UC-02: Patient Account Management
+- Create, read, update, and delete patient accounts
+- Store comprehensive patient demographics
+- Audit logging for all patient account changes
+- Unique digital health card number tracking
+
+### UC-03: Statistical Reporting
+- Generate statistical reports with KPIs and analytics
+- Export reports as PDF or CSV
+- Filter reports by hospital, department, and date range
+- Daily visits and department breakdowns
+
+### UC-04: Medical Records Access (NEW!)
+- Access comprehensive medical records by scanning digital health card
+- View patient demographics, medical history, and allergies
+- Track current medications and prescriptions
+- Access test results and vaccination records
+- View previous visit history
+- Add new prescriptions and treatment notes
+- Download medical records as PDF
+- Complete audit trail of all medical record access
 
 ### Technical Features
 - RESTful API with Spring Boot
@@ -20,7 +42,7 @@ This is a Spring Boot application implementing UC-01: Book Appointment use case 
 - Lombok for reducing boilerplate code
 - CORS enabled for all origins
 - No authentication required (as per requirements)
-- Comprehensive unit and integration tests
+- Comprehensive unit and integration tests (94 tests passing!)
 
 ## Tech Stack
 - Java 17
@@ -815,6 +837,309 @@ All report exports are logged in the system with:
 - Export timestamp
 - Filter parameters used
 - Export status (COMPLETED/FAILED)
+
+## Medical Records Access (UC-04)
+
+### Overview
+The Medical Records Access API allows hospital staff to access comprehensive patient medical records by scanning their digital health card or directly by patient ID. The system provides complete medical history including demographics, medications, prescriptions, test results, vaccinations, and previous visit records.
+
+### API Endpoints
+
+#### 1. Scan Digital Health Card
+
+**POST** `/api/medical-records/scan-card`
+
+Access patient medical records by scanning their digital health card barcode/QR code.
+
+**Request Body:**
+```json
+{
+  "cardNumber": "DHC-2024-001",
+  "staffId": "DR-SMITH-001",
+  "purpose": "General consultation"
+}
+```
+
+**Example:**
+```bash
+curl -X POST http://localhost:8080/api/medical-records/scan-card \
+  -H "Content-Type: application/json" \
+  -d '{
+    "cardNumber": "DHC-2024-001",
+    "staffId": "DR-SMITH-001",
+    "purpose": "General consultation"
+  }'
+```
+
+**Response:**
+```json
+{
+  "patientId": 1,
+  "name": "John Doe",
+  "email": "john.doe@example.com",
+  "phone": "+1234567890",
+  "digitalHealthCardNumber": "DHC-2024-001",
+  "address": "123 Main Street, City",
+  "dateOfBirth": "1985-05-15",
+  "bloodType": "O+",
+  "emergencyContactName": "Jane Doe",
+  "emergencyContactPhone": "+1234567899",
+  "medicalHistory": "Hypertension diagnosed in 2018",
+  "allergies": "Penicillin",
+  "currentMedications": [
+    {
+      "id": 1,
+      "medicationName": "Lisinopril",
+      "dosage": "10mg",
+      "frequency": "Once daily",
+      "startDate": "2024-04-16",
+      "prescribedBy": "Dr. Sarah Williams",
+      "active": true
+    }
+  ],
+  "previousVisits": [
+    {
+      "appointmentId": 1,
+      "visitDate": "2024-10-11T14:00:00",
+      "providerName": "Dr. Sarah Williams",
+      "specialty": "Cardiology",
+      "hospitalName": "City Government Hospital",
+      "status": "CONFIRMED"
+    }
+  ],
+  "prescriptions": [
+    {
+      "id": 1,
+      "prescribedBy": "Dr. Sarah Williams",
+      "prescriptionDate": "2024-10-06T10:00:00",
+      "diagnosis": "Hypertension management",
+      "treatment": "Continue current medication, monitor blood pressure",
+      "medications": "Lisinopril 10mg once daily",
+      "notes": "Patient responding well to treatment",
+      "followUpDate": "2025-01-06T10:00:00"
+    }
+  ],
+  "testResults": [
+    {
+      "id": 1,
+      "testName": "Blood Pressure",
+      "testDate": "2024-10-09",
+      "result": "120/80",
+      "resultUnit": "mmHg",
+      "referenceRange": "< 120/80",
+      "orderedBy": "Dr. Sarah Williams",
+      "performedBy": "Nurse Johnson",
+      "notes": "Normal blood pressure reading"
+    }
+  ],
+  "vaccinations": [
+    {
+      "id": 1,
+      "vaccineName": "Influenza",
+      "vaccinationDate": "2024-04-16",
+      "batchNumber": "FLU2024-001",
+      "manufacturer": "Pfizer",
+      "administeredBy": "Nurse Williams",
+      "nextDoseDate": "2025-04-16",
+      "notes": "Annual flu vaccine"
+    }
+  ],
+  "accessedAt": "2025-10-16T15:30:00",
+  "accessedBy": "DR-SMITH-001"
+}
+```
+
+#### 2. Get Medical Records by Patient ID
+
+**GET** `/api/medical-records/{patientId}`
+
+Access patient medical records directly by patient ID.
+
+**Query Parameters:**
+- `staffId` (optional, default: "STAFF_DEFAULT"): ID of staff accessing the records
+- `purpose` (optional, default: "General consultation"): Purpose of accessing records
+
+**Example:**
+```bash
+curl "http://localhost:8080/api/medical-records/1?staffId=DR-JONES-002&purpose=Follow-up%20visit"
+```
+
+**Response:** Same as Scan Card endpoint
+
+#### 3. Add Prescription/Treatment Notes
+
+**POST** `/api/medical-records/prescriptions`
+
+Add new prescription or treatment notes to a patient's medical record.
+
+**Request Body:**
+```json
+{
+  "patientId": 1,
+  "staffId": "Dr. Johnson",
+  "diagnosis": "Seasonal Allergies",
+  "treatment": "Antihistamines and rest",
+  "medications": "Cetirizine 10mg once daily",
+  "notes": "Review in 2 weeks",
+  "followUpDate": "2024-10-30T14:00:00"
+}
+```
+
+**Example:**
+```bash
+curl -X POST http://localhost:8080/api/medical-records/prescriptions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "patientId": 1,
+    "staffId": "Dr. Johnson",
+    "diagnosis": "Seasonal Allergies",
+    "treatment": "Antihistamines and rest",
+    "medications": "Cetirizine 10mg once daily",
+    "notes": "Review in 2 weeks",
+    "followUpDate": "2024-10-30T14:00:00"
+  }'
+```
+
+**Response:** Complete medical record response including the newly added prescription
+
+#### 4. Download Medical Records as PDF
+
+**GET** `/api/medical-records/{patientId}/download`
+
+Download complete medical records as a PDF document.
+
+**Query Parameters:**
+- `staffId` (optional, default: "STAFF_DEFAULT"): ID of staff downloading the records
+- `purpose` (optional, default: "Patient copy"): Purpose of download
+
+**Example:**
+```bash
+curl "http://localhost:8080/api/medical-records/1/download?staffId=DR-SMITH-001&purpose=Referral" \
+  --output medical_record_patient_1.pdf
+```
+
+**Response:**
+- **Content-Type:** `application/pdf`
+- **Content-Disposition:** `attachment; filename="medical_record_1_20251016_153000.pdf"`
+- **Body:** PDF file containing complete medical records
+
+#### 5. Get Access Logs
+
+**GET** `/api/medical-records/{patientId}/access-logs`
+
+Retrieve audit trail of all access attempts for a patient's medical records.
+
+**Example:**
+```bash
+curl http://localhost:8080/api/medical-records/1/access-logs
+```
+
+**Response:**
+```json
+[
+  {
+    "id": 3,
+    "patientId": 1,
+    "staffId": "DR-SMITH-001",
+    "accessType": "DOWNLOAD",
+    "accessTimestamp": "2025-10-16T15:35:00",
+    "purpose": "Patient copy",
+    "accessGranted": true,
+    "denialReason": null
+  },
+  {
+    "id": 2,
+    "patientId": 1,
+    "staffId": "Dr. Johnson",
+    "accessType": "UPDATE",
+    "accessTimestamp": "2025-10-16T15:30:00",
+    "purpose": "Added prescription - Diagnosis: Seasonal Allergies",
+    "accessGranted": true,
+    "denialReason": null
+  },
+  {
+    "id": 1,
+    "patientId": 1,
+    "staffId": "DR-SMITH-001",
+    "accessType": "VIEW",
+    "accessTimestamp": "2025-10-16T15:25:00",
+    "purpose": "General consultation",
+    "accessGranted": true,
+    "denialReason": null
+  }
+]
+```
+
+### Medical Records Features
+
+#### Comprehensive Patient Information
+The medical records include:
+- **Patient Demographics:** Name, contact info, DOB, blood type, address
+- **Emergency Contacts:** Name and phone number
+- **Medical History:** Chronic conditions and past medical events
+- **Allergies:** Known allergies and sensitivities
+- **Current Medications:** Active medications with dosage and frequency
+- **Prescriptions:** Historical prescriptions with diagnosis and treatment plans
+- **Test Results:** Laboratory and diagnostic test results with reference ranges
+- **Vaccinations:** Immunization history with batch numbers and next dose dates
+- **Previous Visits:** Appointment history with providers and specialties
+
+#### Access Logging
+All medical record access is logged with:
+- **Access Type:** VIEW, UPDATE, or DOWNLOAD
+- **Staff ID:** Identifier of the staff member accessing records
+- **Timestamp:** When the access occurred
+- **Purpose:** Reason for accessing the records
+- **Access Status:** Whether access was granted
+- **Denial Reason:** Explanation if access was denied
+
+#### Security and Compliance
+- Unique digital health card number for patient identification
+- Complete audit trail for regulatory compliance
+- All access attempts are logged for security review
+- Support for multiple access types (view, update, download)
+
+### Use Cases
+
+#### Scenario 1: Emergency Room Visit
+1. Patient arrives at emergency room
+2. Staff scans patient's digital health card using `/api/medical-records/scan-card`
+3. System displays complete medical history including allergies (critical for emergency care)
+4. Doctor reviews current medications to avoid drug interactions
+5. All access is logged for audit purposes
+
+#### Scenario 2: Regular Checkup
+1. Staff retrieves medical records using `/api/medical-records/{patientId}`
+2. Doctor reviews previous visit notes and test results
+3. Doctor adds new prescription using `/api/medical-records/prescriptions`
+4. Patient requests copy of records for personal use
+5. Staff downloads PDF using `/api/medical-records/{patientId}/download`
+
+#### Scenario 3: Audit and Compliance
+1. Administrator reviews access logs using `/api/medical-records/{patientId}/access-logs`
+2. System shows all staff who accessed the patient's records
+3. Each access includes timestamp, staff ID, and purpose
+4. Helps ensure compliance with privacy regulations
+
+### Error Scenarios
+
+#### Patient Not Found
+```json
+{
+  "timestamp": "2025-10-16T15:30:00",
+  "message": "Patient records not found for card number: INVALID-CARD",
+  "status": 500
+}
+```
+
+#### Invalid Patient ID
+```json
+{
+  "timestamp": "2025-10-16T15:30:00",
+  "message": "Patient not found",
+  "status": 500
+}
+```
 
 ## Future Enhancements
 

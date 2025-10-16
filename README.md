@@ -26,8 +26,13 @@ The API will be available at `http://localhost:8080`
 - ✅ Generate statistical reports with KPIs and analytics
 - ✅ Export reports as PDF or CSV
 - ✅ Filter reports by hospital, department, and date range
+- ✅ **NEW: Access comprehensive medical records by digital health card**
+- ✅ **NEW: View medications, prescriptions, test results, and vaccinations**
+- ✅ **NEW: Add prescriptions and treatment notes**
+- ✅ **NEW: Download medical records as PDF**
+- ✅ **NEW: Complete audit trail of medical record access**
 - ✅ Full CORS support (no authentication required)
-- ✅ 70 comprehensive tests (100% passing)
+- ✅ 94 comprehensive tests (100% passing)
 
 ## Example Usage
 
@@ -57,9 +62,17 @@ See [API_DOCUMENTATION.md](API_DOCUMENTATION.md) for complete API reference and 
 
 ## Testing
 
-All 70 tests passing:
-- 34 unit tests (service layer - AppointmentService: 11, PatientService: 11, ReportService: 12)
-- 35 integration tests (API layer - AppointmentController: 9, PatientController: 11, ReportController: 15)
+All 94 tests passing:
+- 44 unit tests (service layer)
+  - AppointmentService: 11 tests
+  - PatientService: 11 tests
+  - ReportService: 12 tests
+  - MedicalRecordService: 10 tests
+- 49 integration tests (API layer)
+  - AppointmentController: 9 tests
+  - PatientController: 11 tests
+  - ReportController: 15 tests
+  - MedicalRecordController: 14 tests
 - 1 application context test
 - Manual testing verified
 
@@ -96,6 +109,15 @@ The application initializes with:
 |--------|----------|-------------|
 | GET | `/api/reports` | Generate statistical report with filters (hospital, department, date range) |
 | POST | `/api/reports/export` | Export report as PDF or CSV |
+
+### Medical Records Access (UC-04)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/medical-records/scan-card` | Access medical records by scanning digital health card |
+| GET | `/api/medical-records/{id}` | Get comprehensive medical records by patient ID |
+| POST | `/api/medical-records/prescriptions` | Add new prescription/treatment notes |
+| GET | `/api/medical-records/{id}/download` | Download medical records as PDF |
+| GET | `/api/medical-records/{id}/access-logs` | Get audit trail of medical record access |
 
 ## H2 Database Console
 
