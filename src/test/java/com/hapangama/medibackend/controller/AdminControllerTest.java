@@ -169,6 +169,199 @@ class AdminControllerTest {
                 .andExpect(status().isNotFound());
     }
 
+    // Healthcare Provider Management Tests
+    @Test
+    void testCreateProvider_Success() throws Exception {
+        String providerJson = """
+            {
+                "name": "Dr. New Provider",
+                "specialty": "Cardiology",
+                "hospitalName": "Heart Hospital",
+                "hospitalType": "PRIVATE"
+            }
+            """;
+
+        mockMvc.perform(post("/api/admin/providers")
+                        .contentType("application/json")
+                        .content(providerJson))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name", is("Dr. New Provider")))
+                .andExpect(jsonPath("$.specialty", is("Cardiology")))
+                .andExpect(jsonPath("$.hospitalName", is("Heart Hospital")))
+                .andExpect(jsonPath("$.hospitalType", is("PRIVATE")));
+    }
+
+    @Test
+    void testGetProvider_Success() throws Exception {
+        HealthcareProvider provider = createTestProvider();
+
+        mockMvc.perform(get("/api/admin/providers/" + provider.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name", is("Dr. Test")))
+                .andExpect(jsonPath("$.specialty", is("General Medicine")))
+                .andExpect(jsonPath("$.hospitalName", is("Test Hospital")));
+    }
+
+    @Test
+    void testGetProvider_NotFound() throws Exception {
+        mockMvc.perform(get("/api/admin/providers/999"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testUpdateProvider_Success() throws Exception {
+        HealthcareProvider provider = createTestProvider();
+
+        String updateJson = """
+            {
+                "name": "Dr. Updated",
+                "specialty": "Neurology"
+            }
+            """;
+
+        mockMvc.perform(put("/api/admin/providers/" + provider.getId())
+                        .contentType("application/json")
+                        .content(updateJson))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name", is("Dr. Updated")))
+                .andExpect(jsonPath("$.specialty", is("Neurology")))
+                .andExpect(jsonPath("$.hospitalName", is("Test Hospital")));
+    }
+
+    @Test
+    void testUpdateProvider_NotFound() throws Exception {
+        String updateJson = """
+            {
+                "name": "Dr. Updated"
+            }
+            """;
+
+        mockMvc.perform(put("/api/admin/providers/999")
+                        .contentType("application/json")
+                        .content(updateJson))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testDeleteProvider_Success() throws Exception {
+        HealthcareProvider provider = createTestProvider();
+
+        mockMvc.perform(delete("/api/admin/providers/" + provider.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message", is("Provider deleted successfully")));
+    }
+
+    @Test
+    void testDeleteProvider_NotFound() throws Exception {
+        mockMvc.perform(delete("/api/admin/providers/999"))
+                .andExpect(status().isNotFound());
+    }
+
+    // Time Slot Management Tests
+    @Test
+    void testCreateTimeSlot_Success() throws Exception {
+        HealthcareProvider provider = createTestProvider();
+
+        String timeSlotJson = """
+            {
+                "startTime": "2025-12-01T09:00:00",
+                "endTime": "2025-12-01T10:00:00",
+                "available": true
+            }
+            """;
+
+        mockMvc.perform(post("/api/admin/providers/" + provider.getId() + "/timeslots")
+                        .contentType("application/json")
+                        .content(timeSlotJson))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.providerId", is(provider.getId().intValue())))
+                .andExpect(jsonPath("$.available", is(true)));
+    }
+
+    @Test
+    void testCreateTimeSlot_ProviderNotFound() throws Exception {
+        String timeSlotJson = """
+            {
+                "startTime": "2025-12-01T09:00:00",
+                "endTime": "2025-12-01T10:00:00",
+                "available": true
+            }
+            """;
+
+        mockMvc.perform(post("/api/admin/providers/999/timeslots")
+                        .contentType("application/json")
+                        .content(timeSlotJson))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testGetProviderTimeSlots_Success() throws Exception {
+        HealthcareProvider provider = createTestProvider();
+        createTestTimeSlot(provider);
+        createTestTimeSlot(provider);
+
+        mockMvc.perform(get("/api/admin/providers/" + provider.getId() + "/timeslots"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)));
+    }
+
+    @Test
+    void testGetProviderTimeSlots_Empty() throws Exception {
+        HealthcareProvider provider = createTestProvider();
+
+        mockMvc.perform(get("/api/admin/providers/" + provider.getId() + "/timeslots"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    @Test
+    void testUpdateTimeSlot_Success() throws Exception {
+        HealthcareProvider provider = createTestProvider();
+        TimeSlot timeSlot = createTestTimeSlot(provider);
+
+        String updateJson = """
+            {
+                "available": false
+            }
+            """;
+
+        mockMvc.perform(put("/api/admin/timeslots/" + timeSlot.getId())
+                        .contentType("application/json")
+                        .content(updateJson))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.available", is(false)));
+    }
+
+    @Test
+    void testUpdateTimeSlot_NotFound() throws Exception {
+        String updateJson = """
+            {
+                "available": false
+            }
+            """;
+
+        mockMvc.perform(put("/api/admin/timeslots/999")
+                        .contentType("application/json")
+                        .content(updateJson))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testDeleteTimeSlot_Success() throws Exception {
+        HealthcareProvider provider = createTestProvider();
+        TimeSlot timeSlot = createTestTimeSlot(provider);
+
+        mockMvc.perform(delete("/api/admin/timeslots/" + timeSlot.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message", is("Time slot deleted successfully")));
+    }
+
+    @Test
+    void testDeleteTimeSlot_NotFound() throws Exception {
+        mockMvc.perform(delete("/api/admin/timeslots/999"))
+                .andExpect(status().isNotFound());
+    }
+
     // Helper methods
     private Patient createTestPatient(String username, String email, String cardNumber) {
         User user = new User();

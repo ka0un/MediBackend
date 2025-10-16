@@ -13,4 +13,5 @@ public interface TimeSlotRepository extends JpaRepository<TimeSlot, Long> {
             Long providerId, LocalDateTime after);
     List<TimeSlot> findByProviderIdAndAvailableTrueAndStartTimeBetween(
             Long providerId, LocalDateTime start, LocalDateTime end);
+    List<TimeSlot> findByProviderId(Long providerId);
 }

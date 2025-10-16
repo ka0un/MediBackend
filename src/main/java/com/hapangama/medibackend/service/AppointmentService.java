@@ -198,4 +198,101 @@ public class AppointmentService {
         response.setHospitalType(provider.getHospitalType());
         return response;
     }
+
+    // Healthcare Provider Management
+    @Transactional
+    public ProviderResponse createProvider(CreateProviderRequest request) {
+        HealthcareProvider provider = new HealthcareProvider();
+        provider.setName(request.getName());
+        provider.setSpecialty(request.getSpecialty());
+        provider.setHospitalName(request.getHospitalName());
+        provider.setHospitalType(request.getHospitalType());
+        
+        provider = providerRepository.save(provider);
+        return mapToProviderResponse(provider);
+    }
+
+    @Transactional
+    public ProviderResponse updateProvider(Long providerId, UpdateProviderRequest request) {
+        HealthcareProvider provider = providerRepository.findById(providerId)
+                .orElseThrow(() -> new com.hapangama.medibackend.exception.NotFoundException("Provider not found"));
+        
+        if (request.getName() != null) {
+            provider.setName(request.getName());
+        }
+        if (request.getSpecialty() != null) {
+            provider.setSpecialty(request.getSpecialty());
+        }
+        if (request.getHospitalName() != null) {
+            provider.setHospitalName(request.getHospitalName());
+        }
+        if (request.getHospitalType() != null) {
+            provider.setHospitalType(request.getHospitalType());
+        }
+        
+        provider = providerRepository.save(provider);
+        return mapToProviderResponse(provider);
+    }
+
+    @Transactional
+    public void deleteProvider(Long providerId) {
+        HealthcareProvider provider = providerRepository.findById(providerId)
+                .orElseThrow(() -> new com.hapangama.medibackend.exception.NotFoundException("Provider not found"));
+        providerRepository.delete(provider);
+    }
+
+    public ProviderResponse getProviderById(Long providerId) {
+        HealthcareProvider provider = providerRepository.findById(providerId)
+                .orElseThrow(() -> new com.hapangama.medibackend.exception.NotFoundException("Provider not found"));
+        return mapToProviderResponse(provider);
+    }
+
+    // Time Slot Management
+    @Transactional
+    public TimeSlotResponse createTimeSlot(Long providerId, CreateTimeSlotRequest request) {
+        HealthcareProvider provider = providerRepository.findById(providerId)
+                .orElseThrow(() -> new com.hapangama.medibackend.exception.NotFoundException("Provider not found"));
+        
+        TimeSlot timeSlot = new TimeSlot();
+        timeSlot.setProvider(provider);
+        timeSlot.setStartTime(request.getStartTime());
+        timeSlot.setEndTime(request.getEndTime());
+        timeSlot.setAvailable(request.getAvailable() != null ? request.getAvailable() : true);
+        
+        timeSlot = timeSlotRepository.save(timeSlot);
+        return mapToTimeSlotResponse(timeSlot);
+    }
+
+    @Transactional
+    public TimeSlotResponse updateTimeSlot(Long timeSlotId, UpdateTimeSlotRequest request) {
+        TimeSlot timeSlot = timeSlotRepository.findById(timeSlotId)
+                .orElseThrow(() -> new com.hapangama.medibackend.exception.NotFoundException("Time slot not found"));
+        
+        if (request.getStartTime() != null) {
+            timeSlot.setStartTime(request.getStartTime());
+        }
+        if (request.getEndTime() != null) {
+            timeSlot.setEndTime(request.getEndTime());
+        }
+        if (request.getAvailable() != null) {
+            timeSlot.setAvailable(request.getAvailable());
+        }
+        
+        timeSlot = timeSlotRepository.save(timeSlot);
+        return mapToTimeSlotResponse(timeSlot);
+    }
+
+    @Transactional
+    public void deleteTimeSlot(Long timeSlotId) {
+        TimeSlot timeSlot = timeSlotRepository.findById(timeSlotId)
+                .orElseThrow(() -> new com.hapangama.medibackend.exception.NotFoundException("Time slot not found"));
+        timeSlotRepository.delete(timeSlot);
+    }
+
+    public List<TimeSlotResponse> getTimeSlotsByProvider(Long providerId) {
+        List<TimeSlot> timeSlots = timeSlotRepository.findByProviderId(providerId);
+        return timeSlots.stream()
+                .map(this::mapToTimeSlotResponse)
+                .collect(Collectors.toList());
+    }
 }
