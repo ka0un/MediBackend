@@ -992,8 +992,8 @@ GET http://localhost:8080/api/reports?hospital=City%20Hospital&department=Cardio
   "filters": {
     "hospital": null,
     "department": null,
-    "startDate": "2025-11-01",
-    "endDate": "2025-11-30",
+    "startDate": "2025-10-01",
+    "endDate": "2025-10-30",
     "reportType": null,
     "granularity": null
   },
