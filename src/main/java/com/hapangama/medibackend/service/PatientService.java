@@ -61,7 +61,7 @@ public class PatientService {
 
     public PatientProfileResponse getPatientProfile(Long patientId) {
         Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new RuntimeException("Patient not found"));
+                .orElseThrow(() -> new com.hapangama.medibackend.exception.NotFoundException("Patient not found"));
         return mapToPatientProfileResponse(patient);
     }
 
@@ -74,7 +74,7 @@ public class PatientService {
     @Transactional
     public PatientProfileResponse updatePatientProfile(Long patientId, UpdatePatientRequest request) {
         Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new RuntimeException("Patient not found"));
+                .orElseThrow(() -> new com.hapangama.medibackend.exception.NotFoundException("Patient not found"));
 
         // Track changes for audit log
         StringBuilder changes = new StringBuilder();
@@ -171,7 +171,7 @@ public class PatientService {
     @Transactional
     public void deletePatient(Long patientId) {
         Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new RuntimeException("Patient not found"));
+                .orElseThrow(() -> new com.hapangama.medibackend.exception.NotFoundException("Patient not found"));
         
         logAuditAction(patient.getId(), "DELETE_ACCOUNT", 
                       "Patient account deleted: " + patient.getName(), null);

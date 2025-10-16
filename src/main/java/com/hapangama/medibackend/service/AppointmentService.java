@@ -146,7 +146,7 @@ public class AppointmentService {
     @Transactional
     public void cancelAppointment(Long appointmentId) {
         Appointment appointment = appointmentRepository.findById(appointmentId)
-                .orElseThrow(() -> new RuntimeException("Appointment not found"));
+                .orElseThrow(() -> new com.hapangama.medibackend.exception.NotFoundException("Appointment not found"));
         
         // Mark time slot as available again
         TimeSlot timeSlot = appointment.getTimeSlot();

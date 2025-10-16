@@ -128,7 +128,7 @@ class PatientControllerTest {
     @Test
     void testGetPatientProfile_NotFound() throws Exception {
         mockMvc.perform(get("/api/patients/999"))
-                .andExpect(status().is5xxServerError())
+                .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message", containsString("Patient not found")));
     }
 
@@ -188,7 +188,7 @@ class PatientControllerTest {
         mockMvc.perform(put("/api/patients/999")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateRequest)))
-                .andExpect(status().is5xxServerError())
+                .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message", containsString("Patient not found")));
     }
 
@@ -232,13 +232,13 @@ class PatientControllerTest {
 
         // Verify patient was deleted
         mockMvc.perform(get("/api/patients/" + patient.getId()))
-                .andExpect(status().is5xxServerError());
+                .andExpect(status().isNotFound());
     }
 
     @Test
     void testDeletePatient_NotFound() throws Exception {
         mockMvc.perform(delete("/api/patients/999"))
-                .andExpect(status().is5xxServerError())
+                .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message", containsString("Patient not found")));
     }
 }
