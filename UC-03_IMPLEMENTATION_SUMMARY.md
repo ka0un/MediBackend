@@ -121,7 +121,7 @@ Body:
 
 ## Testing
 
-### Unit Tests (13 tests)
+### Unit Tests (12 tests)
 **ReportServiceTest** covers:
 1. Report generation without filters
 2. Report generation with hospital filter
@@ -137,7 +137,7 @@ Body:
 12. Completion rate calculations
 13. Error handling scenarios
 
-### Integration Tests (16 tests)
+### Integration Tests (15 tests)
 **ReportControllerTest** covers:
 1. Generate report without filters
 2. Generate report with date range
@@ -156,7 +156,7 @@ Body:
 15. CORS configuration validation
 16. Full end-to-end report generation
 
-**All 72 tests passing** (including existing 43 tests from UC-01 and UC-02)
+**All 70 tests passing** (including existing 43 tests from UC-01 and UC-02)
 
 ## Design Principles & Best Practices
 

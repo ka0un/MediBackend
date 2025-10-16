@@ -27,7 +27,7 @@ The API will be available at `http://localhost:8080`
 - ✅ Export reports as PDF or CSV
 - ✅ Filter reports by hospital, department, and date range
 - ✅ Full CORS support (no authentication required)
-- ✅ 72 comprehensive tests (100% passing)
+- ✅ 70 comprehensive tests (100% passing)
 
 ## Example Usage
 
@@ -57,9 +57,10 @@ See [API_DOCUMENTATION.md](API_DOCUMENTATION.md) for complete API reference and 
 
 ## Testing
 
-All 72 tests passing:
-- 35 unit tests (service layer - AppointmentService: 11, PatientService: 11, ReportService: 13)
-- 36 integration tests (API layer - AppointmentController: 9, PatientController: 11, ReportController: 16)
+All 70 tests passing:
+- 34 unit tests (service layer - AppointmentService: 11, PatientService: 11, ReportService: 12)
+- 35 integration tests (API layer - AppointmentController: 9, PatientController: 11, ReportController: 15)
+- 1 application context test
 - Manual testing verified
 
 ## Sample Data
