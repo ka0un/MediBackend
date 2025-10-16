@@ -1,7 +1,13 @@
 # MediBackend - Healthcare Management System
 
 ## Overview
-This is a comprehensive Spring Boot application implementing multiple healthcare management use cases including appointment booking, patient account management, statistical reporting, and medical records access. The system supports booking appointments with healthcare providers at both government hospitals (free) and private hospitals (requiring payment), managing patient profiles, generating analytics reports, and accessing comprehensive medical records.
+This is a comprehensive Spring Boot application implementing multiple healthcare management use cases. The system includes:
+- Appointment booking with healthcare providers (free for government hospitals, paid for private)
+- Patient account management with full CRUD operations
+- Statistical reporting and analytics with PDF/CSV export
+- Medical records access through digital health card scanning
+
+The application provides a complete REST API for healthcare operations including booking management, patient profiles, analytics reports, and comprehensive medical records access.
 
 ## Features Implemented
 
