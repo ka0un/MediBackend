@@ -645,14 +645,19 @@ async function login(username, password) {
     localStorage.setItem('auth', JSON.stringify(data));
     
     // Redirect based on role
+    // For SPAs like React, use React Router's navigate() instead
     if (data.role === 'ADMIN') {
       window.location.href = '/admin/dashboard';
+      // Or in React: navigate('/admin/dashboard');
     } else {
       window.location.href = '/patient/dashboard';
+      // Or in React: navigate('/patient/dashboard');
     }
   } catch (error) {
     console.error('Login error:', error);
-    alert(error.message);
+    // Display user-friendly error (e.g., toast notification, inline error)
+    // alert(error.message);  // Avoid using alert() in production
+    showErrorNotification(error.message);
   }
 }
 ```
@@ -676,6 +681,9 @@ async function logout() {
 ---
 
 ## Testing Credentials
+
+> ⚠️ **SECURITY WARNING:** These are default development credentials. 
+> **MUST** be changed before deploying to production!
 
 ### Admin Account
 - **Username:** `admin`

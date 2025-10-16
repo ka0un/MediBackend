@@ -45,12 +45,12 @@ curl -X POST http://localhost:8080/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{"username":"patient1","password":"password123","name":"John Doe","email":"john@test.com","phone":"1234567890","digitalHealthCardNumber":"DHC-001"}'
 
-# Login as admin
+# Login as admin (⚠️ CHANGE DEFAULT PASSWORD IN PRODUCTION!)
 curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"admin"}'
 
-# Login as patient
+# Login as patient (⚠️ These are test credentials for development only)
 curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"john.doe","password":"password123"}'
