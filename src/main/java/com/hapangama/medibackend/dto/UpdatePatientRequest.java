@@ -1,48 +1,23 @@
-package com.hapangama.medibackend.model;
+package com.hapangama.medibackend.dto;
 
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
-@Entity
-@Table(name = "patients")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Patient {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(nullable = false)
+public class UpdatePatientRequest {
     private String name;
-
-    @Column(nullable = false, unique = true)
     private String email;
-
-    @Column(nullable = false)
     private String phone;
-
-    @Column(nullable = false, unique = true)
-    private String digitalHealthCardNumber;
-
-    // Additional fields for UC-02
     private String address;
-
     private LocalDate dateOfBirth;
-
     private String emergencyContactName;
-
     private String emergencyContactPhone;
-
-    @Column(length = 2000)
     private String medicalHistory;
-
     private String bloodType;
-
     private String allergies;
 }
