@@ -34,8 +34,10 @@ The API will be available at `http://localhost:8080`
 - ✅ **NEW: User authentication with admin and patient roles**
 - ✅ **NEW: Patient registration system**
 - ✅ **NEW: Admin dashboard with full management capabilities**
+- ✅ **NEW: Healthcare provider management (add, edit, remove providers)**
+- ✅ **NEW: Time slot management for healthcare providers**
 - ✅ Full CORS support (no authentication required)
-- ✅ 125 comprehensive tests (100% passing)
+- ✅ 139 comprehensive tests (100% passing)
 
 ## Example Usage
 
@@ -85,20 +87,20 @@ See [FRONTEND_CHANGES.md](FRONTEND_CHANGES.md) for comprehensive frontend implem
 
 ## Testing
 
-All 125 tests passing:
+All 139 tests passing:
 - 57 unit tests (service layer)
   - AppointmentService: 11 tests
   - PatientService: 11 tests
   - ReportService: 12 tests
   - MedicalRecordService: 10 tests
-  - AuthService: 13 tests (NEW)
-- 67 integration tests (API layer)
+  - AuthService: 13 tests
+- 81 integration tests (API layer)
   - AppointmentController: 9 tests
   - PatientController: 11 tests
   - ReportController: 15 tests
   - MedicalRecordController: 14 tests
-  - AuthController: 8 tests (NEW)
-  - AdminController: 10 tests (NEW)
+  - AuthController: 8 tests
+  - AdminController: 24 tests (14 new provider/timeslot management tests)
 - 1 application context test
 - Manual testing verified
 
@@ -128,6 +130,14 @@ The application initializes with:
 | GET | `/api/admin/appointments` | Get all appointments |
 | DELETE | `/api/admin/patients/{id}` | Delete a patient account |
 | DELETE | `/api/admin/appointments/{id}` | Cancel an appointment |
+| POST | `/api/admin/providers` | Create a new healthcare provider |
+| GET | `/api/admin/providers/{id}` | Get provider details |
+| PUT | `/api/admin/providers/{id}` | Update provider information |
+| DELETE | `/api/admin/providers/{id}` | Delete a provider |
+| POST | `/api/admin/providers/{id}/timeslots` | Create time slot for provider |
+| GET | `/api/admin/providers/{id}/timeslots` | Get all time slots for provider |
+| PUT | `/api/admin/timeslots/{id}` | Update a time slot |
+| DELETE | `/api/admin/timeslots/{id}` | Delete a time slot |
 
 ### Appointment Management (UC-01)
 | Method | Endpoint | Description |

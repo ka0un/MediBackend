@@ -1147,6 +1147,303 @@ All medical record access is logged with:
 }
 ```
 
+## Admin Healthcare Provider Management
+
+### Overview
+The Admin Healthcare Provider Management API allows administrators to create, read, update, and delete healthcare providers and their associated time slots. This provides complete control over the provider network and appointment availability.
+
+### API Endpoints
+
+#### 1. Create Healthcare Provider
+
+**POST** `/api/admin/providers`
+
+Create a new healthcare provider in the system.
+
+**Request Body:**
+```json
+{
+  "name": "Dr. Sarah Williams",
+  "specialty": "Cardiology",
+  "hospitalName": "City Government Hospital",
+  "hospitalType": "GOVERNMENT"
+}
+```
+
+**Example:**
+```bash
+curl -X POST http://localhost:8080/api/admin/providers \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Dr. Sarah Williams",
+    "specialty": "Cardiology",
+    "hospitalName": "City Government Hospital",
+    "hospitalType": "GOVERNMENT"
+  }'
+```
+
+**Response:**
+```json
+{
+  "id": 1,
+  "name": "Dr. Sarah Williams",
+  "specialty": "Cardiology",
+  "hospitalName": "City Government Hospital",
+  "hospitalType": "GOVERNMENT"
+}
+```
+
+**Hospital Types:**
+- `GOVERNMENT` - Free appointments for patients
+- `PRIVATE` - Paid appointments requiring payment
+
+#### 2. Get Healthcare Provider
+
+**GET** `/api/admin/providers/{providerId}`
+
+Retrieve details of a specific healthcare provider.
+
+**Example:**
+```bash
+curl http://localhost:8080/api/admin/providers/1
+```
+
+**Response:**
+```json
+{
+  "id": 1,
+  "name": "Dr. Sarah Williams",
+  "specialty": "Cardiology",
+  "hospitalName": "City Government Hospital",
+  "hospitalType": "GOVERNMENT"
+}
+```
+
+#### 3. Update Healthcare Provider
+
+**PUT** `/api/admin/providers/{providerId}`
+
+Update an existing healthcare provider's information. Only include fields you want to update.
+
+**Request Body:**
+```json
+{
+  "name": "Dr. Sarah Williams-Johnson",
+  "specialty": "Cardiology and Internal Medicine"
+}
+```
+
+**Example:**
+```bash
+curl -X PUT http://localhost:8080/api/admin/providers/1 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Dr. Sarah Williams-Johnson",
+    "specialty": "Cardiology and Internal Medicine"
+  }'
+```
+
+**Response:**
+```json
+{
+  "id": 1,
+  "name": "Dr. Sarah Williams-Johnson",
+  "specialty": "Cardiology and Internal Medicine",
+  "hospitalName": "City Government Hospital",
+  "hospitalType": "GOVERNMENT"
+}
+```
+
+#### 4. Delete Healthcare Provider
+
+**DELETE** `/api/admin/providers/{providerId}`
+
+Remove a healthcare provider from the system.
+
+**Example:**
+```bash
+curl -X DELETE http://localhost:8080/api/admin/providers/1
+```
+
+**Response:**
+```json
+{
+  "message": "Provider deleted successfully"
+}
+```
+
+#### 5. Create Time Slot
+
+**POST** `/api/admin/providers/{providerId}/timeslots`
+
+Create a new time slot for a specific healthcare provider.
+
+**Request Body:**
+```json
+{
+  "startTime": "2025-12-01T09:00:00",
+  "endTime": "2025-12-01T10:00:00",
+  "available": true
+}
+```
+
+**Example:**
+```bash
+curl -X POST http://localhost:8080/api/admin/providers/1/timeslots \
+  -H "Content-Type: application/json" \
+  -d '{
+    "startTime": "2025-12-01T09:00:00",
+    "endTime": "2025-12-01T10:00:00",
+    "available": true
+  }'
+```
+
+**Response:**
+```json
+{
+  "id": 1,
+  "providerId": 1,
+  "providerName": "Dr. Sarah Williams",
+  "startTime": "2025-12-01T09:00:00",
+  "endTime": "2025-12-01T10:00:00",
+  "available": true
+}
+```
+
+**Notes:**
+- Time slots are automatically set to `available: true` if not specified
+- Times should be in ISO 8601 format
+
+#### 6. Get Provider Time Slots
+
+**GET** `/api/admin/providers/{providerId}/timeslots`
+
+Retrieve all time slots for a specific healthcare provider.
+
+**Example:**
+```bash
+curl http://localhost:8080/api/admin/providers/1/timeslots
+```
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "providerId": 1,
+    "providerName": "Dr. Sarah Williams",
+    "startTime": "2025-12-01T09:00:00",
+    "endTime": "2025-12-01T10:00:00",
+    "available": true
+  },
+  {
+    "id": 2,
+    "providerId": 1,
+    "providerName": "Dr. Sarah Williams",
+    "startTime": "2025-12-01T10:00:00",
+    "endTime": "2025-12-01T11:00:00",
+    "available": false
+  }
+]
+```
+
+#### 7. Update Time Slot
+
+**PUT** `/api/admin/timeslots/{timeSlotId}`
+
+Update an existing time slot. Only include fields you want to update.
+
+**Request Body:**
+```json
+{
+  "available": false,
+  "startTime": "2025-12-01T09:30:00",
+  "endTime": "2025-12-01T10:30:00"
+}
+```
+
+**Example:**
+```bash
+curl -X PUT http://localhost:8080/api/admin/timeslots/1 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "available": false
+  }'
+```
+
+**Response:**
+```json
+{
+  "id": 1,
+  "providerId": 1,
+  "providerName": "Dr. Sarah Williams",
+  "startTime": "2025-12-01T09:30:00",
+  "endTime": "2025-12-01T10:30:00",
+  "available": false
+}
+```
+
+#### 8. Delete Time Slot
+
+**DELETE** `/api/admin/timeslots/{timeSlotId}`
+
+Remove a time slot from the system.
+
+**Example:**
+```bash
+curl -X DELETE http://localhost:8080/api/admin/timeslots/1
+```
+
+**Response:**
+```json
+{
+  "message": "Time slot deleted successfully"
+}
+```
+
+### Use Cases
+
+#### Scenario 1: Adding a New Provider
+1. Admin creates a new provider using `/api/admin/providers`
+2. System returns provider details with a unique ID
+3. Admin can immediately start creating time slots for this provider
+
+#### Scenario 2: Managing Provider Schedule
+1. Admin retrieves all time slots for a provider using `/api/admin/providers/{providerId}/timeslots`
+2. Admin updates specific time slots to mark them as unavailable (e.g., provider on vacation)
+3. Admin creates new time slots for upcoming weeks
+4. System ensures only available slots can be booked by patients
+
+#### Scenario 3: Provider Information Update
+1. Admin updates provider information (e.g., specialty change)
+2. All appointments and time slots remain linked to the provider
+3. Updated information is immediately visible to patients
+
+#### Scenario 4: Removing a Provider
+1. Admin deletes a provider from the system
+2. System removes the provider and all associated time slots
+3. Note: This should typically be done only when no active appointments exist
+
+### Error Scenarios
+
+#### Provider Not Found
+```json
+{
+  "timestamp": "2025-10-16T18:00:00",
+  "message": "Provider not found",
+  "status": 404
+}
+```
+
+#### Time Slot Not Found
+```json
+{
+  "timestamp": "2025-10-16T18:00:00",
+  "message": "Time slot not found",
+  "status": 404
+}
+```
+
 ## Future Enhancements
 
 Potential improvements for production:
@@ -1162,6 +1459,8 @@ Potential improvements for production:
 - Add report sharing functionality via email
 - Implement chart visualizations in reports
 - Add comparative analytics (month-over-month, year-over-year)
+- Add bulk time slot creation for providers
+- Implement provider availability patterns (recurring schedules)
 
 ## License
 
