@@ -4,6 +4,7 @@ import com.hapangama.medibackend.dto.AccessLogResponse;
 import com.hapangama.medibackend.dto.AddPrescriptionRequest;
 import com.hapangama.medibackend.dto.MedicalRecordResponse;
 import com.hapangama.medibackend.dto.ScanCardRequest;
+import com.hapangama.medibackend.exception.NotFoundException;
 import com.hapangama.medibackend.model.*;
 import com.hapangama.medibackend.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +31,7 @@ public class MedicalRecordService {
     public MedicalRecordResponse accessMedicalRecordsByCardNumber(ScanCardRequest request) {
         // Find patient by digital health card number
         Patient patient = patientRepository.findByDigitalHealthCardNumber(request.getCardNumber())
-                .orElseThrow(() -> new RuntimeException("Patient records not found for card number: " + request.getCardNumber()));
+                .orElseThrow(() -> new NotFoundException("Patient not found with card number: " + request.getCardNumber()));
 
         // Log the access
         logAccess(patient.getId(), request.getStaffId(), "VIEW", request.getPurpose(), true, null);
@@ -42,7 +43,7 @@ public class MedicalRecordService {
     @Transactional(readOnly = true)
     public MedicalRecordResponse accessMedicalRecordsByPatientId(Long patientId, String staffId, String purpose) {
         Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new RuntimeException("Patient not found"));
+                .orElseThrow(() -> new NotFoundException("Patient not found with ID: " + patientId));
 
         // Log the access
         logAccess(patientId, staffId, "VIEW", purpose, true, null);
@@ -53,7 +54,7 @@ public class MedicalRecordService {
     @Transactional
     public MedicalRecordResponse addPrescription(AddPrescriptionRequest request) {
         Patient patient = patientRepository.findById(request.getPatientId())
-                .orElseThrow(() -> new RuntimeException("Patient not found"));
+                .orElseThrow(() -> new NotFoundException("Patient not found with ID: " + request.getPatientId()));
 
         // Create new prescription
         Prescription prescription = new Prescription();
@@ -78,7 +79,7 @@ public class MedicalRecordService {
     @Transactional(readOnly = true)
     public byte[] downloadMedicalRecordsAsPdf(Long patientId, String staffId, String purpose) {
         Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new RuntimeException("Patient not found"));
+                .orElseThrow(() -> new NotFoundException("Patient not found with ID: " + patientId));
 
         // Log the download access
         logAccess(patientId, staffId, "DOWNLOAD", purpose, true, null);

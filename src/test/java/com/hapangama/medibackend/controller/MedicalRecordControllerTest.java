@@ -179,8 +179,8 @@ class MedicalRecordControllerTest {
         mockMvc.perform(post("/api/medical-records/scan-card")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().is5xxServerError())
-                .andExpect(jsonPath("$.message", containsString("Patient records not found")));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message", containsString("Patient not found with card number: INVALID-CARD")));
     }
 
     @Test
@@ -211,8 +211,8 @@ class MedicalRecordControllerTest {
         mockMvc.perform(get("/api/medical-records/99999")
                         .param("staffId", "STAFF-002")
                         .param("purpose", "Consultation"))
-                .andExpect(status().is5xxServerError())
-                .andExpect(jsonPath("$.message", is("Patient not found")));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message", is("Patient not found with ID: 99999")));
     }
 
     @Test
@@ -245,8 +245,8 @@ class MedicalRecordControllerTest {
         mockMvc.perform(post("/api/medical-records/prescriptions")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().is5xxServerError())
-                .andExpect(jsonPath("$.message", is("Patient not found")));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message", is("Patient not found with ID: 99999")));
     }
 
     @Test
@@ -272,8 +272,8 @@ class MedicalRecordControllerTest {
         mockMvc.perform(get("/api/medical-records/99999/download")
                         .param("staffId", "STAFF-003")
                         .param("purpose", "Patient copy"))
-                .andExpect(status().is5xxServerError())
-                .andExpect(jsonPath("$.message", is("Patient not found")));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message", is("Patient not found with ID: 99999")));
     }
 
     @Test

@@ -87,7 +87,7 @@ class PatientControllerTest {
         mockMvc.perform(post("/api/patients")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().is5xxServerError())
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message", containsString("Email already exists")));
     }
 
@@ -102,7 +102,7 @@ class PatientControllerTest {
         mockMvc.perform(post("/api/patients")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().is5xxServerError())
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message", containsString("Missing Required Fields")));
     }
 
@@ -214,7 +214,7 @@ class PatientControllerTest {
         mockMvc.perform(put("/api/patients/" + patient1.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateRequest)))
-                .andExpect(status().is5xxServerError())
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message", containsString("Email already exists")));
     }
 

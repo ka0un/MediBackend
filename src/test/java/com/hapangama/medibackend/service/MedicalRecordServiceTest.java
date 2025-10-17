@@ -3,6 +3,7 @@ package com.hapangama.medibackend.service;
 import com.hapangama.medibackend.dto.AddPrescriptionRequest;
 import com.hapangama.medibackend.dto.MedicalRecordResponse;
 import com.hapangama.medibackend.dto.ScanCardRequest;
+import com.hapangama.medibackend.exception.NotFoundException;
 import com.hapangama.medibackend.model.*;
 import com.hapangama.medibackend.repository.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -199,11 +200,11 @@ class MedicalRecordServiceTest {
                 .thenReturn(Optional.empty());
 
         // Act & Assert
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+        NotFoundException exception = assertThrows(NotFoundException.class, () -> {
             medicalRecordService.accessMedicalRecordsByCardNumber(request);
         });
 
-        assertTrue(exception.getMessage().contains("Patient records not found"));
+        assertTrue(exception.getMessage().contains("Patient not found with card number: INVALID-CARD"));
         verify(accessLogRepository, never()).save(any(MedicalRecordAccessLog.class));
     }
 
@@ -242,11 +243,11 @@ class MedicalRecordServiceTest {
         when(patientRepository.findById(999L)).thenReturn(Optional.empty());
 
         // Act & Assert
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+        NotFoundException exception = assertThrows(NotFoundException.class, () -> {
             medicalRecordService.accessMedicalRecordsByPatientId(999L, "STAFF-002", "Consultation");
         });
 
-        assertEquals("Patient not found", exception.getMessage());
+        assertEquals("Patient not found with ID: 999", exception.getMessage());
         verify(accessLogRepository, never()).save(any(MedicalRecordAccessLog.class));
     }
 
@@ -298,11 +299,11 @@ class MedicalRecordServiceTest {
         when(patientRepository.findById(999L)).thenReturn(Optional.empty());
 
         // Act & Assert
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+        NotFoundException exception = assertThrows(NotFoundException.class, () -> {
             medicalRecordService.addPrescription(request);
         });
 
-        assertEquals("Patient not found", exception.getMessage());
+        assertEquals("Patient not found with ID: 999", exception.getMessage());
         verify(prescriptionRepository, never()).save(any(Prescription.class));
     }
 
@@ -338,11 +339,11 @@ class MedicalRecordServiceTest {
         when(patientRepository.findById(999L)).thenReturn(Optional.empty());
 
         // Act & Assert
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+        NotFoundException exception = assertThrows(NotFoundException.class, () -> {
             medicalRecordService.downloadMedicalRecordsAsPdf(999L, "STAFF-003", "Patient copy");
         });
 
-        assertEquals("Patient not found", exception.getMessage());
+        assertEquals("Patient not found with ID: 999", exception.getMessage());
     }
 
     @Test
