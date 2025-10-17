@@ -15,6 +15,10 @@ import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Service for OTP verification operations
+ * Follows Dependency Inversion Principle - depends on SmsGateway interface, not concrete implementation
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -22,7 +26,7 @@ public class OtpVerificationService {
 
     private final OtpVerificationRepository otpRepository;
     private final PatientRepository patientRepository;
-    private final SmsService smsService;
+    private final SmsGateway smsGateway; // Changed from SmsService to SmsGateway interface
     private final SecureRandom secureRandom = new SecureRandom();
 
     private static final int MAX_ATTEMPTS = 3;
@@ -76,8 +80,8 @@ public class OtpVerificationService {
 
         otpVerification = otpRepository.save(otpVerification);
 
-        // Send SMS
-        boolean smsSent = smsService.sendOtpSms(phoneNumber, otpCode, patient.getName());
+        // Send SMS using gateway interface
+        boolean smsSent = smsGateway.sendOtpSms(phoneNumber, otpCode, patient.getName());
 
         if (!smsSent) {
             log.warn("Failed to send OTP SMS to patient: {}", patientId);
