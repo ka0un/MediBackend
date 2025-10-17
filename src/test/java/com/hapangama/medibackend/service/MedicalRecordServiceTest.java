@@ -48,6 +48,9 @@ class MedicalRecordServiceTest {
     @Mock
     private MedicalRecordAccessLogRepository accessLogRepository;
 
+    @Mock
+    private PrivacyService privacyService;
+
     @InjectMocks
     private MedicalRecordService medicalRecordService;
 
@@ -155,6 +158,7 @@ class MedicalRecordServiceTest {
 
         when(patientRepository.findByDigitalHealthCardNumber("DHC-2024-001"))
                 .thenReturn(Optional.of(testPatient));
+        doNothing().when(privacyService).validateAccess(any(Patient.class), anyString());
         when(medicationRepository.findByPatientIdAndActiveTrue(1L))
                 .thenReturn(List.of(testMedication));
         when(appointmentRepository.findByPatientId(1L))
@@ -212,6 +216,7 @@ class MedicalRecordServiceTest {
     void testAccessMedicalRecordsByPatientId_Success() {
         // Arrange
         when(patientRepository.findById(1L)).thenReturn(Optional.of(testPatient));
+        doNothing().when(privacyService).validateAccess(any(Patient.class), anyString());
         when(medicationRepository.findByPatientIdAndActiveTrue(1L))
                 .thenReturn(List.of(testMedication));
         when(appointmentRepository.findByPatientId(1L))
@@ -264,6 +269,7 @@ class MedicalRecordServiceTest {
         request.setFollowUpDate(LocalDateTime.now().plusWeeks(2));
 
         when(patientRepository.findById(1L)).thenReturn(Optional.of(testPatient));
+        doNothing().when(privacyService).validateAccess(any(Patient.class), anyString());
         when(prescriptionRepository.save(any(Prescription.class))).thenReturn(testPrescription);
         when(medicationRepository.findByPatientIdAndActiveTrue(1L))
                 .thenReturn(List.of(testMedication));
@@ -311,6 +317,7 @@ class MedicalRecordServiceTest {
     void testDownloadMedicalRecordsAsPdf_Success() {
         // Arrange
         when(patientRepository.findById(1L)).thenReturn(Optional.of(testPatient));
+        doNothing().when(privacyService).validateAccess(any(Patient.class), anyString());
         when(medicationRepository.findByPatientIdAndActiveTrue(1L))
                 .thenReturn(List.of(testMedication));
         when(appointmentRepository.findByPatientId(1L))
@@ -386,6 +393,7 @@ class MedicalRecordServiceTest {
     void testAccessMedicalRecords_WithEmptyMedicalData() {
         // Arrange
         when(patientRepository.findById(1L)).thenReturn(Optional.of(testPatient));
+        doNothing().when(privacyService).validateAccess(any(Patient.class), anyString());
         when(medicationRepository.findByPatientIdAndActiveTrue(1L))
                 .thenReturn(new ArrayList<>());
         when(appointmentRepository.findByPatientId(1L))
