@@ -1,7 +1,6 @@
 package com.hapangama.medibackend.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -20,6 +19,9 @@ public class Patient {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Version
+    private Long version; // Optimistic locking for concurrent access (UC-04 E5)
 
     @OneToOne
     @JoinColumn(name = "user_id", unique = true)
@@ -52,6 +54,29 @@ public class Patient {
     private String bloodType;
 
     private String allergies;
+
+    // Privacy and Access Control Fields (UC-04 E3)
+    @Column(nullable = false)
+    private boolean restrictedAccess = false; // VIP/Sensitive patient flag
+
+    @Column(length = 1000)
+    private String accessRestrictionReason; // Reason for restriction
+
+    @Column(nullable = false)
+    private boolean requiresExplicitConsent = false; // Requires additional consent
+
+    @Column(length = 2000)
+    private String consentNotes; // Consent management notes
+
+    @ElementCollection
+    @CollectionTable(name = "patient_restricted_staff", joinColumns = @JoinColumn(name = "patient_id"))
+    @Column(name = "staff_username")
+    private java.util.Set<String> restrictedStaffList = new java.util.HashSet<>(); // Staff blocked from access
+
+    @ElementCollection
+    @CollectionTable(name = "patient_authorized_staff", joinColumns = @JoinColumn(name = "patient_id"))
+    @Column(name = "staff_username")
+    private java.util.Set<String> authorizedStaffList = new java.util.HashSet<>(); // Whitelist for restricted patients
 
     @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL, orphanRemoval = true)
     private java.util.List<Medication> medications;

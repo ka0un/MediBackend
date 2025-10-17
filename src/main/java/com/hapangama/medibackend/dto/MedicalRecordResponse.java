@@ -14,6 +14,7 @@ import java.util.List;
 public class MedicalRecordResponse {
     // Patient Demographics
     private Long patientId;
+    private Long version; // For optimistic locking (UC-04 E5)
     private String name;
     private String email;
     private String phone;

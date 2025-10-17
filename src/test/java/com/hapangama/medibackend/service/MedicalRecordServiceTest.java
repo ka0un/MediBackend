@@ -3,6 +3,7 @@ package com.hapangama.medibackend.service;
 import com.hapangama.medibackend.dto.AddPrescriptionRequest;
 import com.hapangama.medibackend.dto.MedicalRecordResponse;
 import com.hapangama.medibackend.dto.ScanCardRequest;
+import com.hapangama.medibackend.exception.NotFoundException;
 import com.hapangama.medibackend.model.*;
 import com.hapangama.medibackend.repository.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,7 +21,6 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -46,6 +46,9 @@ class MedicalRecordServiceTest {
 
     @Mock
     private MedicalRecordAccessLogRepository accessLogRepository;
+
+    @Mock
+    private PrivacyService privacyService;
 
     @InjectMocks
     private MedicalRecordService medicalRecordService;
@@ -154,6 +157,7 @@ class MedicalRecordServiceTest {
 
         when(patientRepository.findByDigitalHealthCardNumber("DHC-2024-001"))
                 .thenReturn(Optional.of(testPatient));
+        doNothing().when(privacyService).validateAccess(any(Patient.class), anyString());
         when(medicationRepository.findByPatientIdAndActiveTrue(1L))
                 .thenReturn(List.of(testMedication));
         when(appointmentRepository.findByPatientId(1L))
@@ -199,11 +203,11 @@ class MedicalRecordServiceTest {
                 .thenReturn(Optional.empty());
 
         // Act & Assert
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+        NotFoundException exception = assertThrows(NotFoundException.class, () -> {
             medicalRecordService.accessMedicalRecordsByCardNumber(request);
         });
 
-        assertTrue(exception.getMessage().contains("Patient records not found"));
+        assertTrue(exception.getMessage().contains("Patient not found with card number: INVALID-CARD"));
         verify(accessLogRepository, never()).save(any(MedicalRecordAccessLog.class));
     }
 
@@ -211,6 +215,7 @@ class MedicalRecordServiceTest {
     void testAccessMedicalRecordsByPatientId_Success() {
         // Arrange
         when(patientRepository.findById(1L)).thenReturn(Optional.of(testPatient));
+        doNothing().when(privacyService).validateAccess(any(Patient.class), anyString());
         when(medicationRepository.findByPatientIdAndActiveTrue(1L))
                 .thenReturn(List.of(testMedication));
         when(appointmentRepository.findByPatientId(1L))
@@ -242,11 +247,11 @@ class MedicalRecordServiceTest {
         when(patientRepository.findById(999L)).thenReturn(Optional.empty());
 
         // Act & Assert
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+        NotFoundException exception = assertThrows(NotFoundException.class, () -> {
             medicalRecordService.accessMedicalRecordsByPatientId(999L, "STAFF-002", "Consultation");
         });
 
-        assertEquals("Patient not found", exception.getMessage());
+        assertEquals("Patient not found with ID: 999", exception.getMessage());
         verify(accessLogRepository, never()).save(any(MedicalRecordAccessLog.class));
     }
 
@@ -263,6 +268,7 @@ class MedicalRecordServiceTest {
         request.setFollowUpDate(LocalDateTime.now().plusWeeks(2));
 
         when(patientRepository.findById(1L)).thenReturn(Optional.of(testPatient));
+        doNothing().when(privacyService).validateAccess(any(Patient.class), anyString());
         when(prescriptionRepository.save(any(Prescription.class))).thenReturn(testPrescription);
         when(medicationRepository.findByPatientIdAndActiveTrue(1L))
                 .thenReturn(List.of(testMedication));
@@ -298,11 +304,11 @@ class MedicalRecordServiceTest {
         when(patientRepository.findById(999L)).thenReturn(Optional.empty());
 
         // Act & Assert
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+        NotFoundException exception = assertThrows(NotFoundException.class, () -> {
             medicalRecordService.addPrescription(request);
         });
 
-        assertEquals("Patient not found", exception.getMessage());
+        assertEquals("Patient not found with ID: 999", exception.getMessage());
         verify(prescriptionRepository, never()).save(any(Prescription.class));
     }
 
@@ -310,6 +316,7 @@ class MedicalRecordServiceTest {
     void testDownloadMedicalRecordsAsPdf_Success() {
         // Arrange
         when(patientRepository.findById(1L)).thenReturn(Optional.of(testPatient));
+        doNothing().when(privacyService).validateAccess(any(Patient.class), anyString());
         when(medicationRepository.findByPatientIdAndActiveTrue(1L))
                 .thenReturn(List.of(testMedication));
         when(appointmentRepository.findByPatientId(1L))
@@ -338,11 +345,11 @@ class MedicalRecordServiceTest {
         when(patientRepository.findById(999L)).thenReturn(Optional.empty());
 
         // Act & Assert
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+        NotFoundException exception = assertThrows(NotFoundException.class, () -> {
             medicalRecordService.downloadMedicalRecordsAsPdf(999L, "STAFF-003", "Patient copy");
         });
 
-        assertEquals("Patient not found", exception.getMessage());
+        assertEquals("Patient not found with ID: 999", exception.getMessage());
     }
 
     @Test
@@ -385,6 +392,7 @@ class MedicalRecordServiceTest {
     void testAccessMedicalRecords_WithEmptyMedicalData() {
         // Arrange
         when(patientRepository.findById(1L)).thenReturn(Optional.of(testPatient));
+        doNothing().when(privacyService).validateAccess(any(Patient.class), anyString());
         when(medicationRepository.findByPatientIdAndActiveTrue(1L))
                 .thenReturn(new ArrayList<>());
         when(appointmentRepository.findByPatientId(1L))

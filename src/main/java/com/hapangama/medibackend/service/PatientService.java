@@ -3,6 +3,7 @@ package com.hapangama.medibackend.service;
 import com.hapangama.medibackend.dto.CreatePatientRequest;
 import com.hapangama.medibackend.dto.PatientProfileResponse;
 import com.hapangama.medibackend.dto.UpdatePatientRequest;
+import com.hapangama.medibackend.exception.BadRequestException;
 import com.hapangama.medibackend.model.AuditLog;
 import com.hapangama.medibackend.model.Patient;
 import com.hapangama.medibackend.repository.AuditLogRepository;
@@ -26,12 +27,12 @@ public class PatientService {
     public PatientProfileResponse createPatient(CreatePatientRequest request) {
         // Validate email uniqueness
         if (patientRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new RuntimeException("Email already exists");
+            throw new BadRequestException("Email already exists");
         }
 
         // Validate digital health card number uniqueness
         if (patientRepository.findByDigitalHealthCardNumber(request.getDigitalHealthCardNumber()).isPresent()) {
-            throw new RuntimeException("Digital Health Card Number already exists");
+            throw new BadRequestException("Digital Health Card Number already exists");
         }
 
         // Validate required fields
@@ -93,7 +94,7 @@ public class PatientService {
             if (!request.getEmail().equals(patient.getEmail())) {
                 patientRepository.findByEmail(request.getEmail()).ifPresent(p -> {
                     if (!p.getId().equals(patientId)) {
-                        throw new RuntimeException("Email already exists");
+                        throw new BadRequestException("Email already exists");
                     }
                 });
                 changes.append("Email changed from '").append(patient.getEmail())
@@ -181,16 +182,16 @@ public class PatientService {
 
     private void validateRequiredFields(String name, String email, String phone, String digitalHealthCardNumber) {
         if (name == null || name.trim().isEmpty()) {
-            throw new RuntimeException("Missing Required Fields: Name is required");
+            throw new BadRequestException("Missing Required Fields: Name is required");
         }
         if (email == null || email.trim().isEmpty()) {
-            throw new RuntimeException("Missing Required Fields: Email is required");
+            throw new BadRequestException("Missing Required Fields: Email is required");
         }
         if (phone == null || phone.trim().isEmpty()) {
-            throw new RuntimeException("Missing Required Fields: Phone is required");
+            throw new BadRequestException("Missing Required Fields: Phone is required");
         }
         if (digitalHealthCardNumber == null || digitalHealthCardNumber.trim().isEmpty()) {
-            throw new RuntimeException("Missing Required Fields: Digital Health Card Number is required");
+            throw new BadRequestException("Missing Required Fields: Digital Health Card Number is required");
         }
     }
 

@@ -4,9 +4,12 @@ import com.hapangama.medibackend.dto.AccessLogResponse;
 import com.hapangama.medibackend.dto.AddPrescriptionRequest;
 import com.hapangama.medibackend.dto.MedicalRecordResponse;
 import com.hapangama.medibackend.dto.ScanCardRequest;
+import com.hapangama.medibackend.exception.NotFoundException;
 import com.hapangama.medibackend.model.*;
 import com.hapangama.medibackend.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,12 +28,21 @@ public class MedicalRecordService {
     private final VaccinationRepository vaccinationRepository;
     private final AppointmentRepository appointmentRepository;
     private final MedicalRecordAccessLogRepository accessLogRepository;
+    private final PrivacyService privacyService;
 
     @Transactional(readOnly = true)
+    @Retryable(
+        retryFor = {org.springframework.dao.DataAccessException.class},
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 1000, multiplier = 2, maxDelay = 10000)
+    )
     public MedicalRecordResponse accessMedicalRecordsByCardNumber(ScanCardRequest request) {
         // Find patient by digital health card number
         Patient patient = patientRepository.findByDigitalHealthCardNumber(request.getCardNumber())
-                .orElseThrow(() -> new RuntimeException("Patient records not found for card number: " + request.getCardNumber()));
+                .orElseThrow(() -> new NotFoundException("Patient not found with card number: " + request.getCardNumber()));
+
+        // Validate privacy access (UC-04 E3)
+        privacyService.validateAccess(patient, request.getStaffId());
 
         // Log the access
         logAccess(patient.getId(), request.getStaffId(), "VIEW", request.getPurpose(), true, null);
@@ -40,9 +52,17 @@ public class MedicalRecordService {
     }
 
     @Transactional(readOnly = true)
+    @Retryable(
+        retryFor = {org.springframework.dao.DataAccessException.class},
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 1000, multiplier = 2, maxDelay = 10000)
+    )
     public MedicalRecordResponse accessMedicalRecordsByPatientId(Long patientId, String staffId, String purpose) {
         Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new RuntimeException("Patient not found"));
+                .orElseThrow(() -> new NotFoundException("Patient not found with ID: " + patientId));
+
+        // Validate privacy access (UC-04 E3)
+        privacyService.validateAccess(patient, staffId);
 
         // Log the access
         logAccess(patientId, staffId, "VIEW", purpose, true, null);
@@ -53,7 +73,10 @@ public class MedicalRecordService {
     @Transactional
     public MedicalRecordResponse addPrescription(AddPrescriptionRequest request) {
         Patient patient = patientRepository.findById(request.getPatientId())
-                .orElseThrow(() -> new RuntimeException("Patient not found"));
+                .orElseThrow(() -> new NotFoundException("Patient not found with ID: " + request.getPatientId()));
+
+        // Validate privacy access (UC-04 E3)
+        privacyService.validateAccess(patient, request.getStaffId());
 
         // Create new prescription
         Prescription prescription = new Prescription();
@@ -78,7 +101,10 @@ public class MedicalRecordService {
     @Transactional(readOnly = true)
     public byte[] downloadMedicalRecordsAsPdf(Long patientId, String staffId, String purpose) {
         Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new RuntimeException("Patient not found"));
+                .orElseThrow(() -> new NotFoundException("Patient not found with ID: " + patientId));
+
+        // Validate privacy access (UC-04 E3)
+        privacyService.validateAccess(patient, staffId);
 
         // Log the download access
         logAccess(patientId, staffId, "DOWNLOAD", purpose, true, null);
@@ -100,6 +126,7 @@ public class MedicalRecordService {
 
         // Patient Demographics
         response.setPatientId(patient.getId());
+        response.setVersion(patient.getVersion()); // For concurrent access detection (UC-04 E5)
         response.setName(patient.getName());
         response.setEmail(patient.getEmail());
         response.setPhone(patient.getPhone());
