@@ -2,6 +2,7 @@ package com.hapangama.medibackend.config;
 
 import com.hapangama.medibackend.model.*;
 import com.hapangama.medibackend.repository.*;
+import com.hapangama.medibackend.repository.AppointmentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -22,6 +23,7 @@ public class DataInitializer implements CommandLineRunner {
     private final TestResultRepository testResultRepository;
     private final VaccinationRepository vaccinationRepository;
     private final UserRepository userRepository;
+    private final AppointmentRepository appointmentRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Override
@@ -122,6 +124,9 @@ public class DataInitializer implements CommandLineRunner {
         // Create time slots for private providers
         createTimeSlots(privateProvider1, LocalDateTime.now().plusDays(1), 5);
         createTimeSlots(privateProvider2, LocalDateTime.now().plusDays(1), 5);
+
+        // Create sample appointments with past dates for reports
+        createSampleAppointments(patient1, patient2, govProvider1, govProvider2, privateProvider1, privateProvider2);
 
         // Initialize medical records for patient1
         initializeMedicalRecords(patient1, govProvider1);
@@ -229,5 +234,56 @@ public class DataInitializer implements CommandLineRunner {
             slot.setAvailable(true);
             timeSlotRepository.save(slot);
         }
+    }
+
+    private void createSampleAppointments(Patient patient1, Patient patient2,
+                                          HealthcareProvider govProvider1, HealthcareProvider govProvider2,
+                                          HealthcareProvider privateProvider1, HealthcareProvider privateProvider2) {
+        // Create appointments over the past 30 days with various statuses
+        LocalDateTime now = LocalDateTime.now();
+        
+        // Past appointments for patient1
+        createAppointment(patient1, govProvider1, now.minusDays(25), Appointment.AppointmentStatus.COMPLETED);
+        createAppointment(patient1, govProvider1, now.minusDays(20), Appointment.AppointmentStatus.COMPLETED);
+        createAppointment(patient1, govProvider2, now.minusDays(15), Appointment.AppointmentStatus.CONFIRMED);
+        createAppointment(patient1, privateProvider1, now.minusDays(10), Appointment.AppointmentStatus.COMPLETED);
+        createAppointment(patient1, govProvider1, now.minusDays(5), Appointment.AppointmentStatus.CANCELLED);
+        
+        // Past appointments for patient2
+        createAppointment(patient2, privateProvider1, now.minusDays(28), Appointment.AppointmentStatus.COMPLETED);
+        createAppointment(patient2, privateProvider2, now.minusDays(22), Appointment.AppointmentStatus.COMPLETED);
+        createAppointment(patient2, govProvider2, now.minusDays(18), Appointment.AppointmentStatus.CONFIRMED);
+        createAppointment(patient2, privateProvider1, now.minusDays(12), Appointment.AppointmentStatus.COMPLETED);
+        createAppointment(patient2, govProvider1, now.minusDays(7), Appointment.AppointmentStatus.COMPLETED);
+        createAppointment(patient2, privateProvider2, now.minusDays(3), Appointment.AppointmentStatus.CONFIRMED);
+        
+        // Mix of recent appointments
+        createAppointment(patient1, govProvider2, now.minusDays(2), Appointment.AppointmentStatus.CONFIRMED);
+        createAppointment(patient2, govProvider1, now.minusDays(1), Appointment.AppointmentStatus.PENDING_PAYMENT);
+        
+        System.out.println("- 13 Sample appointments created (past 30 days)");
+    }
+
+    private void createAppointment(Patient patient, HealthcareProvider provider, 
+                                   LocalDateTime appointmentTime, Appointment.AppointmentStatus status) {
+        // Create a time slot for this appointment
+        TimeSlot timeSlot = new TimeSlot();
+        timeSlot.setProvider(provider);
+        timeSlot.setStartTime(appointmentTime);
+        timeSlot.setEndTime(appointmentTime.plusHours(1));
+        timeSlot.setAvailable(false);
+        timeSlot = timeSlotRepository.save(timeSlot);
+        
+        // Create the appointment
+        Appointment appointment = new Appointment();
+        appointment.setPatient(patient);
+        appointment.setProvider(provider);
+        appointment.setTimeSlot(timeSlot);
+        appointment.setStatus(status);
+        appointment.setBookingDateTime(appointmentTime.minusDays(2)); // Booked 2 days before
+        appointment.setConfirmationNumber("CONF-" + System.currentTimeMillis() + "-" + patient.getId());
+        appointment.setPaymentRequired(provider.getHospitalType() == HealthcareProvider.HospitalType.PRIVATE);
+        
+        appointmentRepository.save(appointment);
     }
 }
