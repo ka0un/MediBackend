@@ -12,9 +12,14 @@ import org.springframework.web.client.RestTemplate;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * SMS Service implementation using Text.lk gateway
+ * Follows Dependency Inversion Principle - implements SmsGateway interface
+ * Follows Single Responsibility Principle - only handles SMS sending
+ */
 @Service
 @Slf4j
-public class SmsService {
+public class SmsService implements SmsGateway {
 
     @Value("${sms.api.url:#{null}}")
     private String smsApiUrl;
@@ -26,9 +31,12 @@ public class SmsService {
     private String smsSenderId;
 
     private final RestTemplate restTemplate;
+    private final PhoneNumberFormatter phoneNumberFormatter;
 
-    public SmsService() {
-        this.restTemplate = new RestTemplate();
+    // Dependency Injection instead of creating RestTemplate internally
+    public SmsService(RestTemplate restTemplate, PhoneNumberFormatter phoneNumberFormatter) {
+        this.restTemplate = restTemplate;
+        this.phoneNumberFormatter = phoneNumberFormatter;
     }
 
     /**
@@ -37,7 +45,8 @@ public class SmsService {
      * @param message SMS message content
      * @return Success status
      */
-    public boolean sendSMS(String phoneNumber, String message) {
+    @Override
+    public boolean sendSms(String phoneNumber, String message) {
         try {
             // Check if SMS service is configured
             if (smsApiUrl == null || smsApiUrl.isEmpty() || smsApiToken == null || smsApiToken.isEmpty()) {
@@ -52,7 +61,7 @@ public class SmsService {
             }
 
             // Format phone number: convert 0xxxxxxxxx to 94xxxxxxxxx
-            String formattedPhone = formatPhoneNumber(phoneNumber);
+            String formattedPhone = phoneNumberFormatter.formatPhoneNumber(phoneNumber);
 
             // Prepare request body
             Map<String, String> requestBody = new HashMap<>();
@@ -87,35 +96,13 @@ public class SmsService {
     }
 
     /**
-     * Format phone number to international format
-     * @param phoneNumber Phone number in local or international format
-     * @return Formatted phone number (94xxxxxxxxx)
-     */
-    private String formatPhoneNumber(String phoneNumber) {
-        // Remove all non-digit characters
-        String cleaned = phoneNumber.replaceAll("[^0-9]", "");
-
-        // If starts with 0, replace with 94
-        if (cleaned.startsWith("0")) {
-            return "94" + cleaned.substring(1);
-        }
-
-        // If already starts with 94, return as is
-        if (cleaned.startsWith("94")) {
-            return cleaned;
-        }
-
-        // Otherwise, assume it's missing country code
-        return "94" + cleaned;
-    }
-
-    /**
      * Send OTP SMS
      * @param phoneNumber Recipient phone number
      * @param otpCode OTP code to send
      * @param patientName Patient name (optional)
      * @return Success status
      */
+    @Override
     public boolean sendOtpSms(String phoneNumber, String otpCode, String patientName) {
         String message = String.format(
                 "MediSystem Identity Verification\n\n" +
@@ -137,6 +124,6 @@ public class SmsService {
             );
         }
 
-        return sendSMS(phoneNumber, message);
+        return sendSms(phoneNumber, message);
     }
 }

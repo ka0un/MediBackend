@@ -1,14 +1,19 @@
 package com.hapangama.medibackend.controller;
 
+import com.hapangama.medibackend.dto.*;
 import com.hapangama.medibackend.model.OtpVerification;
 import com.hapangama.medibackend.service.OtpVerificationService;
+import com.hapangama.medibackend.util.PhoneNumberMasker;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.Map;
-
+/**
+ * Controller for OTP verification endpoints
+ * Follows Single Responsibility Principle - only handles HTTP requests/responses
+ * Follows Dependency Inversion Principle - depends on service interfaces
+ * Follows Open/Closed Principle - uses DTOs instead of raw Maps
+ */
 @RestController
 @RequestMapping("/api/otp")
 @RequiredArgsConstructor
@@ -16,22 +21,24 @@ import java.util.Map;
 public class OtpVerificationController {
 
     private final OtpVerificationService otpService;
+    private final PhoneNumberMasker phoneNumberMasker;
 
     /**
      * Send OTP to patient's phone for identity verification
      */
     @PostMapping("/send")
-    public ResponseEntity<Map<String, Object>> sendOtp(
-            @RequestParam Long patientId,
-            @RequestParam String staffUsername
-    ) {
-        OtpVerification otpVerification = otpService.sendOtpForPatientVerification(patientId, staffUsername);
+    public ResponseEntity<OtpSendResponse> sendOtp(@RequestBody OtpSendRequest request) {
+        OtpVerification otpVerification = otpService.sendOtpForPatientVerification(
+                request.getPatientId(), 
+                request.getStaffUsername()
+        );
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("message", "OTP sent successfully to patient's phone");
-        response.put("phoneNumber", maskPhoneNumber(otpVerification.getPhoneNumber()));
-        response.put("expiresAt", otpVerification.getExpiresAt());
+        OtpSendResponse response = OtpSendResponse.builder()
+                .success(true)
+                .message("OTP sent successfully to patient's phone")
+                .phoneNumber(phoneNumberMasker.maskPhoneNumber(otpVerification.getPhoneNumber()))
+                .expiresAt(otpVerification.getExpiresAt())
+                .build();
 
         return ResponseEntity.ok(response);
     }
@@ -40,18 +47,17 @@ public class OtpVerificationController {
      * Verify OTP code entered by patient
      */
     @PostMapping("/verify")
-    public ResponseEntity<Map<String, Object>> verifyOtp(
-            @RequestBody Map<String, Object> request
-    ) {
-        Long patientId = Long.valueOf(request.get("patientId").toString());
-        String otpCode = request.get("otpCode").toString();
-        String staffUsername = request.get("staffUsername").toString();
+    public ResponseEntity<OtpVerifyResponse> verifyOtp(@RequestBody OtpVerifyRequest request) {
+        boolean verified = otpService.verifyOtp(
+                request.getPatientId(), 
+                request.getOtpCode(), 
+                request.getStaffUsername()
+        );
 
-        boolean verified = otpService.verifyOtp(patientId, otpCode, staffUsername);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", verified);
-        response.put("message", verified ? "Identity verified successfully" : "Verification failed");
+        OtpVerifyResponse response = OtpVerifyResponse.builder()
+                .success(verified)
+                .message(verified ? "Identity verified successfully" : "Verification failed")
+                .build();
 
         return ResponseEntity.ok(response);
     }
@@ -60,30 +66,16 @@ public class OtpVerificationController {
      * Check if patient has recent verified OTP
      */
     @GetMapping("/check-verification")
-    public ResponseEntity<Map<String, Object>> checkVerification(
-            @RequestParam Long patientId
-    ) {
+    public ResponseEntity<OtpCheckResponse> checkVerification(@RequestParam Long patientId) {
         boolean hasVerification = otpService.hasRecentVerification(patientId);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("verified", hasVerification);
-        response.put("message", hasVerification
-                ? "Patient has recent verification"
-                : "No recent verification found");
+        OtpCheckResponse response = OtpCheckResponse.builder()
+                .verified(hasVerification)
+                .message(hasVerification
+                        ? "Patient has recent verification"
+                        : "No recent verification found")
+                .build();
 
         return ResponseEntity.ok(response);
-    }
-
-    /**
-     * Mask phone number for security (show only last 4 digits)
-     * Example: +1234567890 -> ******7890
-     */
-    private String maskPhoneNumber(String phoneNumber) {
-        if (phoneNumber == null || phoneNumber.length() < 4) {
-            return "****";
-        }
-        int visibleDigits = 4;
-        String lastDigits = phoneNumber.substring(phoneNumber.length() - visibleDigits);
-        return "*".repeat(phoneNumber.length() - visibleDigits) + lastDigits;
     }
 }
