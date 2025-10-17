@@ -51,7 +51,7 @@ public class DataInitializer implements CommandLineRunner {
         patient1.setUser(user1);
         patient1.setName("John Doe");
         patient1.setEmail("john.doe@example.com");
-        patient1.setPhone("+1234567890");
+        patient1.setPhone("+94703802880");
         patient1.setDigitalHealthCardNumber("DHC-2024-001");
         patient1.setAddress("123 Main Street, City");
         patient1.setDateOfBirth(LocalDate.of(1985, 5, 15));
@@ -59,7 +59,7 @@ public class DataInitializer implements CommandLineRunner {
         patient1.setAllergies("Penicillin");
         patient1.setMedicalHistory("Hypertension diagnosed in 2018");
         patient1.setEmergencyContactName("Jane Doe");
-        patient1.setEmergencyContactPhone("+1234567899");
+        patient1.setEmergencyContactPhone("+94771234568");
         patient1 = patientRepository.save(patient1);
 
         // Create user for patient 2
@@ -74,7 +74,7 @@ public class DataInitializer implements CommandLineRunner {
         patient2.setUser(user2);
         patient2.setName("Jane Smith");
         patient2.setEmail("jane.smith@example.com");
-        patient2.setPhone("+1234567891");
+        patient2.setPhone("+94703802880");
         patient2.setDigitalHealthCardNumber("DHC-2024-002");
         patient2.setAddress("456 Oak Avenue, Town");
         patient2.setDateOfBirth(LocalDate.of(1990, 8, 20));
@@ -82,7 +82,7 @@ public class DataInitializer implements CommandLineRunner {
         patient2.setAllergies("None");
         patient2.setMedicalHistory("Type 2 Diabetes since 2020");
         patient2.setEmergencyContactName("John Smith");
-        patient2.setEmergencyContactPhone("+1234567898");
+        patient2.setEmergencyContactPhone("+94771234570");
         patient2 = patientRepository.save(patient2);
 
         // Create government hospital provider
