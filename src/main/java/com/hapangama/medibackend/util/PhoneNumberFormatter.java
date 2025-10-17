@@ -1,4 +1,4 @@
-package com.hapangama.medibackend.service;
+package com.hapangama.medibackend.util;
 
 import org.springframework.stereotype.Component;
 
