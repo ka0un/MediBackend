@@ -102,7 +102,7 @@ class SmsServiceTest {
         assertTrue(result);
         
         // Verify that phone number was formatted correctly
-        ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
+        ArgumentCaptor<HttpEntity<?>> captor = ArgumentCaptor.forClass(HttpEntity.class);
         verify(restTemplate).exchange(
                 anyString(),
                 eq(HttpMethod.POST),
@@ -129,7 +129,7 @@ class SmsServiceTest {
 
         // Assert
         assertTrue(result); // Should return true in development mode
-        verify(restTemplate, never()).exchange(anyString(), any(), any(), any(Class.class));
+        verify(restTemplate, never()).exchange(anyString(), any(), any(), eq(String.class));
     }
 
     @Test
@@ -143,7 +143,7 @@ class SmsServiceTest {
 
         // Assert
         assertFalse(result); // Should catch exception and return false
-        verify(restTemplate, never()).exchange(anyString(), any(), any(), any(Class.class));
+        verify(restTemplate, never()).exchange(anyString(), any(), any(), eq(String.class));
     }
 
     @Test
@@ -156,7 +156,7 @@ class SmsServiceTest {
 
         // Assert
         assertFalse(result); // Should catch exception and return false
-        verify(restTemplate, never()).exchange(anyString(), any(), any(), any(Class.class));
+        verify(restTemplate, never()).exchange(anyString(), any(), any(), eq(String.class));
     }
 
     @Test
@@ -222,7 +222,7 @@ class SmsServiceTest {
         assertTrue(result);
         
         // Verify message contains patient name
-        ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
+        ArgumentCaptor<HttpEntity<?>> captor = ArgumentCaptor.forClass(HttpEntity.class);
         verify(restTemplate).exchange(
                 anyString(),
                 eq(HttpMethod.POST),
@@ -258,7 +258,7 @@ class SmsServiceTest {
         assertTrue(result);
         
         // Verify message contains OTP
-        ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
+        ArgumentCaptor<HttpEntity<?>> captor = ArgumentCaptor.forClass(HttpEntity.class);
         verify(restTemplate).exchange(
                 anyString(),
                 eq(HttpMethod.POST),
@@ -309,7 +309,7 @@ class SmsServiceTest {
         smsService.sendSms(phoneNumber, message);
 
         // Assert
-        ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
+        ArgumentCaptor<HttpEntity<?>> captor = ArgumentCaptor.forClass(HttpEntity.class);
         verify(restTemplate).exchange(anyString(), eq(HttpMethod.POST), captor.capture(), eq(String.class));
         
         @SuppressWarnings("unchecked")
@@ -331,7 +331,7 @@ class SmsServiceTest {
         smsService.sendSms(phoneNumber, message);
 
         // Assert
-        ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
+        ArgumentCaptor<HttpEntity<?>> captor = ArgumentCaptor.forClass(HttpEntity.class);
         verify(restTemplate).exchange(anyString(), eq(HttpMethod.POST), captor.capture(), eq(String.class));
         
         @SuppressWarnings("unchecked")
@@ -353,7 +353,7 @@ class SmsServiceTest {
         smsService.sendSms(phoneNumber, message);
 
         // Assert
-        ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
+        ArgumentCaptor<HttpEntity<?>> captor = ArgumentCaptor.forClass(HttpEntity.class);
         verify(restTemplate).exchange(anyString(), eq(HttpMethod.POST), captor.capture(), eq(String.class));
         
         @SuppressWarnings("unchecked")
@@ -375,7 +375,7 @@ class SmsServiceTest {
         smsService.sendSms(phoneNumber, message);
 
         // Assert
-        ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
+        ArgumentCaptor<HttpEntity<?>> captor = ArgumentCaptor.forClass(HttpEntity.class);
         verify(restTemplate).exchange(anyString(), eq(HttpMethod.POST), captor.capture(), eq(String.class));
         
         HttpEntity<?> request = captor.getValue();
@@ -398,7 +398,7 @@ class SmsServiceTest {
         smsService.sendSms(phoneNumber, message);
 
         // Assert
-        ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
+        ArgumentCaptor<HttpEntity<?>> captor = ArgumentCaptor.forClass(HttpEntity.class);
         verify(restTemplate).exchange(anyString(), eq(HttpMethod.POST), captor.capture(), eq(String.class));
         
         @SuppressWarnings("unchecked")
