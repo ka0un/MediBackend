@@ -3,7 +3,6 @@ package com.hapangama.medibackend.service;
 import com.hapangama.medibackend.dto.CreatePatientRequest;
 import com.hapangama.medibackend.dto.PatientProfileResponse;
 import com.hapangama.medibackend.dto.UpdatePatientRequest;
-import com.hapangama.medibackend.exception.BadRequestException;
 import com.hapangama.medibackend.model.AuditLog;
 import com.hapangama.medibackend.model.Patient;
 import com.hapangama.medibackend.repository.AuditLogRepository;
