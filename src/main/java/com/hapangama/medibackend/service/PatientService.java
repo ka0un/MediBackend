@@ -4,8 +4,10 @@ import com.hapangama.medibackend.dto.CreatePatientRequest;
 import com.hapangama.medibackend.dto.PatientProfileResponse;
 import com.hapangama.medibackend.dto.UpdatePatientRequest;
 import com.hapangama.medibackend.exception.BadRequestException;
+import com.hapangama.medibackend.model.Appointment;
 import com.hapangama.medibackend.model.AuditLog;
 import com.hapangama.medibackend.model.Patient;
+import com.hapangama.medibackend.repository.AppointmentRepository;
 import com.hapangama.medibackend.repository.AuditLogRepository;
 import com.hapangama.medibackend.repository.PatientRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ import java.util.stream.Collectors;
 public class PatientService {
 
     private final PatientRepository patientRepository;
+    private final AppointmentRepository appointmentRepository;
     private final AuditLogRepository auditLogRepository;
 
     @Transactional
@@ -176,7 +179,11 @@ public class PatientService {
         
         logAuditAction(patient.getId(), "DELETE_ACCOUNT", 
                       "Patient account deleted: " + patient.getName(), null);
-        
+
+        List<Appointment> appointmentList = appointmentRepository.findByPatientId(patientId);
+        if(!appointmentList.isEmpty()){
+                appointmentRepository.deleteAll(appointmentList);
+        }
         patientRepository.delete(patient);
     }
 

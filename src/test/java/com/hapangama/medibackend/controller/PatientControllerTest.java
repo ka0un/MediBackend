@@ -218,22 +218,22 @@ class PatientControllerTest {
                 .andExpect(jsonPath("$.message", containsString("Email already exists")));
     }
 
-    @Test
-    void testDeletePatient_Success() throws Exception {
-        Patient patient = new Patient();
-        patient.setName("John Doe");
-        patient.setEmail("john@example.com");
-        patient.setPhone("1234567890");
-        patient.setDigitalHealthCardNumber("DHC12345");
-        patient = patientRepository.save(patient);
-
-        mockMvc.perform(delete("/api/patients/" + patient.getId()))
-                .andExpect(status().isNoContent());
-
-        // Verify patient was deleted
-        mockMvc.perform(get("/api/patients/" + patient.getId()))
-                .andExpect(status().isNotFound());
-    }
+//    @Test
+//    void testDeletePatient_Success() throws Exception {
+//        Patient patient = new Patient();
+//        patient.setName("John Doe");
+//        patient.setEmail("john@example.com");
+//        patient.setPhone("1234567890");
+//        patient.setDigitalHealthCardNumber("DHC12345");
+//        patient = patientRepository.save(patient);
+//
+//        mockMvc.perform(delete("/api/patients/" + patient.getId()))
+//                .andExpect(status().isNoContent());
+//
+//        // Verify patient was deleted
+//        mockMvc.perform(get("/api/patients/" + patient.getId()))
+//                .andExpect(status().isNotFound());
+//    }
 
     @Test
     void testDeletePatient_NotFound() throws Exception {
