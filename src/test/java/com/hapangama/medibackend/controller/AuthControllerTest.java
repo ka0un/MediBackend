@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hapangama.medibackend.dto.LoginRequest;
 import com.hapangama.medibackend.dto.RegisterRequest;
 import com.hapangama.medibackend.model.User;
+import com.hapangama.medibackend.repository.AppointmentRepository;
 import com.hapangama.medibackend.repository.PatientRepository;
 import com.hapangama.medibackend.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,11 +36,15 @@ class AuthControllerTest {
     @Autowired
     private PatientRepository patientRepository;
 
+    @Autowired
+    private AppointmentRepository appointmentRepository;
+
     private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @BeforeEach
     void setUp() {
-        // Clean up database
+        // Clean up database in FK-safe order
+        appointmentRepository.deleteAll();
         patientRepository.deleteAll();
         userRepository.deleteAll();
     }
