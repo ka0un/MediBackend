@@ -21,6 +21,8 @@ public class AppointmentService {
     private final HealthcareProviderRepository providerRepository;
     private final TimeSlotRepository timeSlotRepository;
     private final PaymentRepository paymentRepository;
+    // Inject rules for status transitions (OCP)
+    private final List<AppointmentStatusRule> statusRules;
 
     public List<ProviderResponse> getProvidersBySpecialty(String specialty) {
         List<HealthcareProvider> providers = specialty != null && !specialty.isEmpty()
@@ -179,17 +181,12 @@ public class AppointmentService {
             return mapToAppointmentResponse(appointment);
         }
 
-        // Adjust time slot availability when cancelling or restoring from cancelled
-        TimeSlot timeSlot = appointment.getTimeSlot();
-        if (newStatus == Appointment.AppointmentStatus.CANCELLED) {
-            if (timeSlot != null && Boolean.FALSE.equals(timeSlot.getAvailable())) {
-                timeSlot.setAvailable(true);
-                timeSlotRepository.save(timeSlot);
-            }
-        } else if (current == Appointment.AppointmentStatus.CANCELLED) {
-            if (timeSlot != null && Boolean.TRUE.equals(timeSlot.getAvailable())) {
-                timeSlot.setAvailable(false);
-                timeSlotRepository.save(timeSlot);
+        // Delegate side effects to rules instead of hard-coding here (OCP)
+        if (statusRules != null && !statusRules.isEmpty()) {
+            for (AppointmentStatusRule rule : statusRules) {
+                if (rule.supports(current, newStatus)) {
+                    rule.apply(appointment);
+                }
             }
         }
 
