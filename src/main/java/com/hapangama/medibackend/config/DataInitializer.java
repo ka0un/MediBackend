@@ -34,6 +34,12 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeData() {
+        // If data already exists, skip seeding to prevent duplicates and startup failures
+        if (userRepository.existsByUsername("admin") || userRepository.count() > 0) {
+            System.out.println("Data already present. Skipping sample data initialization.");
+            return;
+        }
+
         // Create admin user
         User adminUser = new User();
         adminUser.setUsername("admin");
