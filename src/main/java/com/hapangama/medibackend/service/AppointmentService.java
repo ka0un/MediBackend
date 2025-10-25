@@ -158,6 +158,46 @@ public class AppointmentService {
         appointmentRepository.save(appointment);
     }
 
+    @Transactional
+    public AppointmentResponse updateAppointmentStatus(Long appointmentId, String statusString) {
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new com.hapangama.medibackend.exception.NotFoundException("Appointment not found"));
+
+        if (statusString == null || statusString.isBlank()) {
+            throw new com.hapangama.medibackend.exception.BadRequestException("Status is required");
+        }
+
+        Appointment.AppointmentStatus newStatus;
+        try {
+            newStatus = Appointment.AppointmentStatus.valueOf(statusString.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new com.hapangama.medibackend.exception.BadRequestException("Invalid status value");
+        }
+
+        Appointment.AppointmentStatus current = appointment.getStatus();
+        if (current == newStatus) {
+            return mapToAppointmentResponse(appointment);
+        }
+
+        // Adjust time slot availability when cancelling or restoring from cancelled
+        TimeSlot timeSlot = appointment.getTimeSlot();
+        if (newStatus == Appointment.AppointmentStatus.CANCELLED) {
+            if (timeSlot != null && Boolean.FALSE.equals(timeSlot.getAvailable())) {
+                timeSlot.setAvailable(true);
+                timeSlotRepository.save(timeSlot);
+            }
+        } else if (current == Appointment.AppointmentStatus.CANCELLED) {
+            if (timeSlot != null && Boolean.TRUE.equals(timeSlot.getAvailable())) {
+                timeSlot.setAvailable(false);
+                timeSlotRepository.save(timeSlot);
+            }
+        }
+
+        appointment.setStatus(newStatus);
+        appointment = appointmentRepository.save(appointment);
+        return mapToAppointmentResponse(appointment);
+    }
+
     private String generateConfirmationNumber() {
         return "APT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }

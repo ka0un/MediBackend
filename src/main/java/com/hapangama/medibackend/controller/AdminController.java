@@ -122,4 +122,13 @@ public class AdminController {
         response.put("message", "Time slot deleted successfully");
         return ResponseEntity.ok(response);
     }
+
+    @PutMapping("/appointments/{appointmentId}/status")
+    public ResponseEntity<AppointmentResponse> updateAppointmentStatus(
+            @PathVariable Long appointmentId,
+            @RequestBody Map<String, String> body) {
+        String status = body != null ? body.get("status") : null;
+        AppointmentResponse updated = appointmentService.updateAppointmentStatus(appointmentId, status);
+        return ResponseEntity.ok(updated);
+    }
 }

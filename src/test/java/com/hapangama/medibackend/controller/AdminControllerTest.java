@@ -7,7 +7,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
@@ -19,6 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
 class AdminControllerTest {
 
     @Autowired
@@ -360,6 +363,25 @@ class AdminControllerTest {
     void testDeleteTimeSlot_NotFound() throws Exception {
         mockMvc.perform(delete("/api/admin/timeslots/999"))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testUpdateAppointmentStatus_Success() throws Exception {
+        // Arrange: create appointment in CONFIRMED
+        Patient patient = createTestPatient("patient1", "patient1@test.com", "DHC-001");
+        HealthcareProvider provider = createTestProvider();
+        TimeSlot timeSlot = createTestTimeSlot(provider);
+        Appointment appointment = createTestAppointment(patient, provider, timeSlot);
+
+        String body = "{\n  \"status\": \"COMPLETED\"\n}";
+
+        // Act & Assert
+        mockMvc.perform(put("/api/admin/appointments/" + appointment.getId() + "/status")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(appointment.getId().intValue())))
+                .andExpect(jsonPath("$.status", is("COMPLETED")));
     }
 
     // Helper methods
