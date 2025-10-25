@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hapangama.medibackend.dto.CreatePatientRequest;
 import com.hapangama.medibackend.dto.UpdatePatientRequest;
 import com.hapangama.medibackend.model.Patient;
+import com.hapangama.medibackend.repository.AppointmentRepository;
 import com.hapangama.medibackend.repository.AuditLogRepository;
 import com.hapangama.medibackend.repository.PatientRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,9 +37,13 @@ class PatientControllerTest {
     @Autowired
     private AuditLogRepository auditLogRepository;
 
+    @Autowired
+    private AppointmentRepository appointmentRepository;
+
     @BeforeEach
     void setUp() {
-        // Clean up database
+        // Clean up database - delete in order to respect FK constraints
+        appointmentRepository.deleteAll();
         auditLogRepository.deleteAll();
         patientRepository.deleteAll();
     }

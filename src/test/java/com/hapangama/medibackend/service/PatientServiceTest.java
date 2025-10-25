@@ -5,6 +5,7 @@ import com.hapangama.medibackend.dto.PatientProfileResponse;
 import com.hapangama.medibackend.dto.UpdatePatientRequest;
 import com.hapangama.medibackend.model.AuditLog;
 import com.hapangama.medibackend.model.Patient;
+import com.hapangama.medibackend.repository.AppointmentRepository;
 import com.hapangama.medibackend.repository.AuditLogRepository;
 import com.hapangama.medibackend.repository.PatientRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -29,6 +31,9 @@ class PatientServiceTest {
 
     @Mock
     private AuditLogRepository auditLogRepository;
+
+    @Mock
+    private AppointmentRepository appointmentRepository;
 
     @InjectMocks
     private PatientService patientService;
@@ -197,11 +202,13 @@ class PatientServiceTest {
     @Test
     void testDeletePatient_Success() {
         when(patientRepository.findById(1L)).thenReturn(Optional.of(testPatient));
+        when(appointmentRepository.findByPatientId(1L)).thenReturn(Collections.emptyList());
         when(auditLogRepository.save(any(AuditLog.class))).thenReturn(new AuditLog());
         doNothing().when(patientRepository).delete(any(Patient.class));
 
         patientService.deletePatient(1L);
 
+        verify(appointmentRepository, times(1)).findByPatientId(1L);
         verify(patientRepository, times(1)).delete(testPatient);
         verify(auditLogRepository, times(1)).save(any(AuditLog.class));
     }
