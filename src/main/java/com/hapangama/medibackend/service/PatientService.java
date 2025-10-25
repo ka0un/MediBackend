@@ -10,7 +10,9 @@ import com.hapangama.medibackend.model.Patient;
 import com.hapangama.medibackend.repository.AppointmentRepository;
 import com.hapangama.medibackend.repository.AuditLogRepository;
 import com.hapangama.medibackend.repository.PatientRepository;
+import com.hapangama.medibackend.service.validation.PatientCreationValidator;
 import lombok.RequiredArgsConstructor;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,22 +27,26 @@ public class PatientService {
     private final PatientRepository patientRepository;
     private final AppointmentRepository appointmentRepository;
     private final AuditLogRepository auditLogRepository;
+    // Optional injection to keep unit tests without Spring context working
+    @Nullable
+    private final PatientCreationValidator patientCreationValidator;
 
     @Transactional
     public PatientProfileResponse createPatient(CreatePatientRequest request) {
-        // Validate email uniqueness
-        if (patientRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new BadRequestException("Email already exists");
+        // Delegate validation to strategy if present; else fallback to existing checks
+        if (patientCreationValidator != null) {
+            patientCreationValidator.validate(request);
+        } else {
+            // Fallback validations for unit tests constructed with @InjectMocks
+            if (patientRepository.findByEmail(request.getEmail()).isPresent()) {
+                throw new BadRequestException("Email already exists");
+            }
+            if (patientRepository.findByDigitalHealthCardNumber(request.getDigitalHealthCardNumber()).isPresent()) {
+                throw new BadRequestException("Digital Health Card Number already exists");
+            }
+            validateRequiredFields(request.getName(), request.getEmail(), request.getPhone(),
+                    request.getDigitalHealthCardNumber());
         }
-
-        // Validate digital health card number uniqueness
-        if (patientRepository.findByDigitalHealthCardNumber(request.getDigitalHealthCardNumber()).isPresent()) {
-            throw new BadRequestException("Digital Health Card Number already exists");
-        }
-
-        // Validate required fields
-        validateRequiredFields(request.getName(), request.getEmail(), request.getPhone(), 
-                             request.getDigitalHealthCardNumber());
 
         Patient patient = new Patient();
         patient.setName(request.getName());
