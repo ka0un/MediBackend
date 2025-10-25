@@ -23,6 +23,7 @@ public class AppointmentService {
     private final PaymentRepository paymentRepository;
     // Inject rules for status transitions (OCP)
     private final List<AppointmentStatusRule> statusRules;
+    private final NotificationService notificationService;
 
     public List<ProviderResponse> getProvidersBySpecialty(String specialty) {
         List<HealthcareProvider> providers = specialty != null && !specialty.isEmpty()
@@ -89,6 +90,11 @@ public class AppointmentService {
         }
 
         appointment = appointmentRepository.save(appointment);
+
+        if(this.notificationService != null) {
+            notificationService.sendSmsAppointmentConfirmation(appointment);
+            notificationService.sendEmailAppointmentConfirmation(appointment);
+        }
 
         return mapToAppointmentResponse(appointment);
     }
