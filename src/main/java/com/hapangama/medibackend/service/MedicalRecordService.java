@@ -29,6 +29,7 @@ public class MedicalRecordService {
     private final AppointmentRepository appointmentRepository;
     private final MedicalRecordAccessLogRepository accessLogRepository;
     private final PrivacyService privacyService;
+    private final AuditService auditService;
 
     @Transactional(readOnly = true)
     @Retryable(
@@ -46,6 +47,18 @@ public class MedicalRecordService {
 
         // Log the access
         logAccess(patient.getId(), request.getStaffId(), "VIEW", request.getPurpose(), true, null);
+
+        // Audit comprehensive medical record access
+        auditService.logAsync(AuditService.builder()
+            .action("MEDICAL_RECORD_ACCESSED")
+            .entityType("MedicalRecord")
+            .entityId(String.valueOf(patient.getId()))
+            .patientId(patient.getId())
+            .username(request.getStaffId())
+            .details(String.format("Medical record accessed via card scan for patient %s (Card: %s) by staff %s", 
+                patient.getName(), request.getCardNumber(), request.getStaffId()))
+            .metadata(String.format("{\"accessMethod\":\"card_scan\",\"cardNumber\":\"%s\",\"staffId\":\"%s\",\"purpose\":\"%s\"}", 
+                request.getCardNumber(), request.getStaffId(), request.getPurpose())));
 
         // Build and return comprehensive medical record
         return buildMedicalRecordResponse(patient, request.getStaffId());
@@ -66,6 +79,17 @@ public class MedicalRecordService {
 
         // Log the access
         logAccess(patientId, staffId, "VIEW", purpose, true, null);
+
+        // Audit medical record access
+        auditService.logAsync(AuditService.builder()
+            .action("MEDICAL_RECORD_ACCESSED")
+            .entityType("MedicalRecord")
+            .entityId(String.valueOf(patientId))
+            .patientId(patientId)
+            .username(staffId)
+            .details(String.format("Medical record accessed by staff %s for patient ID %d", staffId, patientId))
+            .metadata(String.format("{\"accessMethod\":\"patient_id\",\"staffId\":\"%s\",\"purpose\":\"%s\"}", 
+                staffId, purpose)));
 
         return buildMedicalRecordResponse(patient, staffId);
     }
@@ -95,6 +119,19 @@ public class MedicalRecordService {
         logAccess(patient.getId(), request.getStaffId(), "UPDATE", 
                  "Added prescription - Diagnosis: " + request.getDiagnosis(), true, null);
 
+        // Audit prescription addition
+        auditService.logAsync(AuditService.builder()
+            .action("PRESCRIPTION_ADDED")
+            .entityType("Prescription")
+            .entityId(String.valueOf(prescription.getId()))
+            .patientId(patient.getId())
+            .username(request.getStaffId())
+            .details(String.format("Prescription added for patient %s by %s - Diagnosis: %s", 
+                patient.getName(), request.getStaffId(), request.getDiagnosis()))
+            .metadata(String.format("{\"prescriptionId\":%d,\"diagnosis\":\"%s\",\"treatment\":\"%s\",\"staffId\":\"%s\"}", 
+                prescription.getId(), request.getDiagnosis(), 
+                request.getTreatment() != null ? request.getTreatment() : "", request.getStaffId())));
+
         return buildMedicalRecordResponse(patient, request.getStaffId());
     }
 
@@ -108,6 +145,18 @@ public class MedicalRecordService {
 
         // Log the download access
         logAccess(patientId, staffId, "DOWNLOAD", purpose, true, null);
+
+        // Audit PDF download
+        auditService.logAsync(AuditService.builder()
+            .action("MEDICAL_RECORD_DOWNLOADED")
+            .entityType("MedicalRecord")
+            .entityId(String.valueOf(patientId))
+            .patientId(patientId)
+            .username(staffId)
+            .details(String.format("Medical record PDF downloaded for patient %s by staff %s", 
+                patient.getName(), staffId))
+            .metadata(String.format("{\"format\":\"PDF\",\"staffId\":\"%s\",\"purpose\":\"%s\"}", 
+                staffId, purpose)));
 
         // Generate PDF
         return generateMedicalRecordPdf(patient);

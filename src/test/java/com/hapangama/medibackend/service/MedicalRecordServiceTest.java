@@ -50,6 +50,9 @@ class MedicalRecordServiceTest {
     @Mock
     private PrivacyServiceImpl privacyServiceImpl;
 
+    @Mock
+    private AuditService auditService;
+
     @InjectMocks
     private MedicalRecordService medicalRecordService;
 

@@ -38,6 +38,9 @@ class ReportServiceTest {
     @Mock
     private ReportExportRepository reportExportRepository;
 
+    @Mock
+    private AuditService auditService;
+
     @InjectMocks
     private ReportService reportService;
 

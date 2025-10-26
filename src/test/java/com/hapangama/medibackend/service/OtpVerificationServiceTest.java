@@ -36,6 +36,9 @@ class OtpVerificationServiceTest {
     @Mock
     private SmsGateway smsGateway; // Changed from SmsService to SmsGateway
 
+    @Mock
+    private AuditService auditService;
+
     @InjectMocks
     private OtpVerificationService otpService;
 

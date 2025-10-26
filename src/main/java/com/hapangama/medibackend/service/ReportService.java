@@ -33,6 +33,7 @@ public class ReportService {
     private final AppointmentRepository appointmentRepository;
     private final PaymentRepository paymentRepository;
     private final ReportExportRepository reportExportRepository;
+    private final AuditService auditService;
 
     @Transactional(readOnly = true)
     public ReportResponse generateReport(ReportFilterRequest filters) {
@@ -66,6 +67,21 @@ public class ReportService {
 
         // Calculate department breakdown
         List<DepartmentBreakdown> departmentBreakdowns = calculateDepartmentBreakdown(appointments);
+
+        // Audit report generation
+        auditService.logAsync(AuditService.builder()
+            .action("REPORT_GENERATED")
+            .entityType("Report")
+            .details(String.format("Statistical report generated (Period: %s to %s, Hospital: %s, Department: %s, Total Visits: %d)", 
+                filters.getStartDate(), filters.getEndDate(), 
+                filters.getHospital() != null ? filters.getHospital() : "All",
+                filters.getDepartment() != null ? filters.getDepartment() : "All",
+                kpis.getTotalVisits()))
+            .metadata(String.format("{\"startDate\":\"%s\",\"endDate\":\"%s\",\"hospital\":\"%s\",\"department\":\"%s\",\"totalVisits\":%d}", 
+                filters.getStartDate(), filters.getEndDate(),
+                filters.getHospital() != null ? filters.getHospital() : "All",
+                filters.getDepartment() != null ? filters.getDepartment() : "All",
+                kpis.getTotalVisits())));
 
         return ReportResponse.builder()
             .kpis(kpis)
@@ -298,6 +314,15 @@ public class ReportService {
             export.setStatus(ReportExport.ExportStatus.COMPLETED);
             reportExportRepository.save(export);
 
+            // Audit PDF export
+            auditService.logAsync(AuditService.builder()
+                .action("REPORT_EXPORTED_PDF")
+                .entityType("ReportExport")
+                .entityId(String.valueOf(export.getId()))
+                .details(String.format("Report exported as PDF: %s", export.getFileName()))
+                .metadata(String.format("{\"exportId\":%d,\"format\":\"PDF\",\"fileName\":\"%s\"}", 
+                    export.getId(), export.getFileName())));
+
             return baos.toByteArray();
         } catch (Exception e) {
             // Record failed export
@@ -367,6 +392,15 @@ public class ReportService {
             export.setFileName("report_" + System.currentTimeMillis() + ".csv");
             export.setStatus(ReportExport.ExportStatus.COMPLETED);
             reportExportRepository.save(export);
+
+            // Audit CSV export
+            auditService.logAsync(AuditService.builder()
+                .action("REPORT_EXPORTED_CSV")
+                .entityType("ReportExport")
+                .entityId(String.valueOf(export.getId()))
+                .details(String.format("Report exported as CSV: %s", export.getFileName()))
+                .metadata(String.format("{\"exportId\":%d,\"format\":\"CSV\",\"fileName\":\"%s\"}", 
+                    export.getId(), export.getFileName())));
 
             return csv.toString();
         } catch (Exception e) {

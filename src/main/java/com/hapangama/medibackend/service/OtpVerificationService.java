@@ -27,6 +27,7 @@ public class OtpVerificationService {
     private final OtpVerificationRepository otpRepository;
     private final PatientRepository patientRepository;
     private final SmsGateway smsGateway; // Changed from SmsService to SmsGateway interface
+    private final AuditService auditService;
     private final SecureRandom secureRandom = new SecureRandom();
 
     private static final int MAX_ATTEMPTS = 3;
@@ -90,6 +91,18 @@ public class OtpVerificationService {
 
         log.info("OTP sent to patient {} by staff {}", patientId, staffUsername);
 
+        // Audit OTP generation
+        auditService.logAsync(AuditService.builder()
+            .action("OTP_SENT")
+            .entityType("OtpVerification")
+            .entityId(String.valueOf(otpVerification.getId()))
+            .patientId(patientId)
+            .username(staffUsername)
+            .details(String.format("OTP sent to patient %s by staff %s for identity verification", 
+                patient.getName(), staffUsername))
+            .metadata(String.format("{\"otpId\":%d,\"patientId\":%d,\"staffUsername\":\"%s\",\"smsSent\":%b}", 
+                otpVerification.getId(), patientId, staffUsername, smsSent)));
+
         return otpVerification;
     }
 
@@ -144,6 +157,18 @@ public class OtpVerificationService {
         otpRepository.save(otpVerification);
 
         log.info("OTP verified successfully for patient {} by staff {}", patientId, staffUsername);
+
+        // Audit successful OTP verification
+        auditService.logAsync(AuditService.builder()
+            .action("OTP_VERIFIED")
+            .entityType("OtpVerification")
+            .entityId(String.valueOf(otpVerification.getId()))
+            .patientId(patientId)
+            .username(staffUsername)
+            .details(String.format("OTP successfully verified for patient %s by staff %s", 
+                patient.getName(), staffUsername))
+            .metadata(String.format("{\"otpId\":%d,\"patientId\":%d,\"staffUsername\":\"%s\",\"attempts\":%d}", 
+                otpVerification.getId(), patientId, staffUsername, otpVerification.getAttempts())));
 
         return true;
     }

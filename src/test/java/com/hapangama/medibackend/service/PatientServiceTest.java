@@ -35,6 +35,9 @@ class PatientServiceTest {
     @Mock
     private AppointmentRepository appointmentRepository;
 
+    @Mock
+    private AuditService auditService;
+
     @InjectMocks
     private PatientService patientService;
 
@@ -76,7 +79,6 @@ class PatientServiceTest {
         when(patientRepository.findByEmail(any())).thenReturn(Optional.empty());
         when(patientRepository.findByDigitalHealthCardNumber(any())).thenReturn(Optional.empty());
         when(patientRepository.save(any(Patient.class))).thenReturn(testPatient);
-        when(auditLogRepository.save(any(AuditLog.class))).thenReturn(new AuditLog());
 
         PatientProfileResponse response = patientService.createPatient(createRequest);
 
@@ -84,7 +86,7 @@ class PatientServiceTest {
         assertEquals("John Doe", response.getName());
         assertEquals("john@example.com", response.getEmail());
         verify(patientRepository, times(1)).save(any(Patient.class));
-        verify(auditLogRepository, times(1)).save(any(AuditLog.class));
+        verify(auditService, times(1)).logAsync(any(AuditService.AuditLogBuilder.class));
     }
 
     @Test
@@ -159,13 +161,12 @@ class PatientServiceTest {
     void testUpdatePatientProfile_Success() {
         when(patientRepository.findById(1L)).thenReturn(Optional.of(testPatient));
         when(patientRepository.save(any(Patient.class))).thenReturn(testPatient);
-        when(auditLogRepository.save(any(AuditLog.class))).thenReturn(new AuditLog());
 
         PatientProfileResponse response = patientService.updatePatientProfile(1L, updateRequest);
 
         assertNotNull(response);
         verify(patientRepository, times(1)).save(any(Patient.class));
-        verify(auditLogRepository, times(1)).save(any(AuditLog.class));
+        verify(auditService, times(1)).logAsync(any(AuditService.AuditLogBuilder.class));
     }
 
     @Test
@@ -203,14 +204,13 @@ class PatientServiceTest {
     void testDeletePatient_Success() {
         when(patientRepository.findById(1L)).thenReturn(Optional.of(testPatient));
         when(appointmentRepository.findByPatientId(1L)).thenReturn(Collections.emptyList());
-        when(auditLogRepository.save(any(AuditLog.class))).thenReturn(new AuditLog());
         doNothing().when(patientRepository).delete(any(Patient.class));
 
         patientService.deletePatient(1L);
 
         verify(appointmentRepository, times(1)).findByPatientId(1L);
         verify(patientRepository, times(1)).delete(testPatient);
-        verify(auditLogRepository, times(1)).save(any(AuditLog.class));
+        verify(auditService, times(1)).logAsync(any(AuditService.AuditLogBuilder.class));
     }
 
     @Test

@@ -31,6 +31,9 @@ class AuthServiceTest {
     @Mock
     private PatientRepository patientRepository;
 
+    @Mock
+    private AuditService auditService;
+
     @InjectMocks
     private AuthService authService;
 

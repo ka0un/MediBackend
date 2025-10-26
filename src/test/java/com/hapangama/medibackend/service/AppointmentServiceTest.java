@@ -38,6 +38,9 @@ class AppointmentServiceTest {
     @Mock
     private PaymentRepository paymentRepository;
 
+    @Mock
+    private AuditService auditService;
+
     @InjectMocks
     private AppointmentService appointmentService;
 

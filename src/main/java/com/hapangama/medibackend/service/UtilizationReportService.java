@@ -30,6 +30,7 @@ public class UtilizationReportService {
     private final AppointmentRepository appointmentRepository;
     private final UtilizationReportCalculator calculator;
     private final UtilizationReportValidator validator;
+    private final AuditService auditService;
 
     /**
      * Create a new utilization report based on filters
@@ -57,6 +58,20 @@ public class UtilizationReportService {
         report.setPeakHours(metrics.getPeakHours());
         
         UtilizationReport savedReport = utilizationReportRepository.save(report);
+
+        // Audit report creation
+        auditService.logAsync(AuditService.builder()
+            .action("UTILIZATION_REPORT_CREATED")
+            .entityType("UtilizationReport")
+            .entityId(String.valueOf(savedReport.getId()))
+            .details(String.format("Utilization report created: %s (Period: %s to %s, Department: %s)", 
+                savedReport.getReportName(), savedReport.getStartDate(), savedReport.getEndDate(), 
+                savedReport.getDepartment() != null ? savedReport.getDepartment() : "All"))
+            .metadata(String.format("{\"reportId\":%d,\"reportName\":\"%s\",\"startDate\":\"%s\",\"endDate\":\"%s\",\"department\":\"%s\",\"totalServices\":%d}", 
+                savedReport.getId(), savedReport.getReportName(), savedReport.getStartDate(), 
+                savedReport.getEndDate(), savedReport.getDepartment() != null ? savedReport.getDepartment() : "All", 
+                savedReport.getTotalServices())));
+
         return UtilizationReportResponse.fromEntity(savedReport);
     }
 
@@ -142,6 +157,16 @@ public class UtilizationReportService {
         }
         
         UtilizationReport updatedReport = utilizationReportRepository.save(report);
+
+        // Audit report update
+        auditService.logAsync(AuditService.builder()
+            .action("UTILIZATION_REPORT_UPDATED")
+            .entityType("UtilizationReport")
+            .entityId(String.valueOf(id))
+            .details(String.format("Utilization report updated: %s (Recalculated: %b)", 
+                updatedReport.getReportName(), needsRecalculation))
+            .metadata(String.format("{\"reportId\":%d,\"recalculated\":%b}", id, needsRecalculation)));
+
         return UtilizationReportResponse.fromEntity(updatedReport);
     }
 
@@ -153,6 +178,15 @@ public class UtilizationReportService {
         if (!utilizationReportRepository.existsById(id)) {
             throw new NotFoundException("Utilization report not found with id: " + id);
         }
+
+        // Audit report deletion
+        auditService.logAsync(AuditService.builder()
+            .action("UTILIZATION_REPORT_DELETED")
+            .entityType("UtilizationReport")
+            .entityId(String.valueOf(id))
+            .details(String.format("Utilization report deleted: ID %d", id))
+            .metadata(String.format("{\"reportId\":%d}", id)));
+
         utilizationReportRepository.deleteById(id);
     }
 
