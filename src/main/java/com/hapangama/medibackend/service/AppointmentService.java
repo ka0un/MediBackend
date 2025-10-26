@@ -24,6 +24,7 @@ public class AppointmentService {
     // Inject rules for status transitions (OCP)
     private final List<AppointmentStatusRule> statusRules;
     private final NotificationService notificationService;
+    private final AuditService auditService;
 
     public List<ProviderResponse> getProvidersBySpecialty(String specialty) {
         List<HealthcareProvider> providers = specialty != null && !specialty.isEmpty()
@@ -91,6 +92,18 @@ public class AppointmentService {
 
         appointment = appointmentRepository.save(appointment);
 
+        // Audit appointment booking
+        auditService.logAsync(AuditService.builder()
+            .action("APPOINTMENT_BOOKED")
+            .entityType("Appointment")
+            .entityId(String.valueOf(appointment.getId()))
+            .patientId(patient.getId())
+            .details(String.format("Appointment booked: Patient %s with Provider %s on %s (Confirmation: %s)", 
+                patient.getName(), provider.getName(), timeSlot.getStartTime(), appointment.getConfirmationNumber()))
+            .metadata(String.format("{\"appointmentId\":%d,\"patientId\":%d,\"providerId\":%d,\"timeSlotId\":%d,\"confirmationNumber\":\"%s\",\"paymentRequired\":%b}", 
+                appointment.getId(), patient.getId(), provider.getId(), timeSlot.getId(), 
+                appointment.getConfirmationNumber(), paymentRequired)));
+
         if(this.notificationService != null) {
             notificationService.sendSmsAppointmentConfirmation(appointment);
             notificationService.sendEmailAppointmentConfirmation(appointment);
@@ -130,6 +143,17 @@ public class AppointmentService {
         appointment.setStatus(Appointment.AppointmentStatus.CONFIRMED);
         appointment = appointmentRepository.save(appointment);
 
+        // Audit payment processing
+        auditService.logAsync(AuditService.builder()
+            .action("APPOINTMENT_PAYMENT_PROCESSED")
+            .entityType("Appointment")
+            .entityId(String.valueOf(appointment.getId()))
+            .patientId(appointment.getPatient().getId())
+            .details(String.format("Payment processed for appointment %s: Amount %s, Method %s", 
+                appointment.getConfirmationNumber(), payment.getAmount(), payment.getPaymentMethod()))
+            .metadata(String.format("{\"appointmentId\":%d,\"paymentId\":%d,\"amount\":%s,\"method\":\"%s\",\"transactionId\":\"%s\"}", 
+                appointment.getId(), payment.getId(), payment.getAmount(), payment.getPaymentMethod(), payment.getTransactionId())));
+
         return mapToAppointmentResponse(appointment);
     }
 
@@ -164,6 +188,17 @@ public class AppointmentService {
         // Update appointment status
         appointment.setStatus(Appointment.AppointmentStatus.CANCELLED);
         appointmentRepository.save(appointment);
+
+        // Audit cancellation
+        auditService.logAsync(AuditService.builder()
+            .action("APPOINTMENT_CANCELLED")
+            .entityType("Appointment")
+            .entityId(String.valueOf(appointmentId))
+            .patientId(appointment.getPatient().getId())
+            .details(String.format("Appointment cancelled: %s for Patient %s", 
+                appointment.getConfirmationNumber(), appointment.getPatient().getName()))
+            .metadata(String.format("{\"appointmentId\":%d,\"confirmationNumber\":\"%s\",\"patientId\":%d}", 
+                appointmentId, appointment.getConfirmationNumber(), appointment.getPatient().getId())));
     }
 
     @Transactional
@@ -198,6 +233,18 @@ public class AppointmentService {
 
         appointment.setStatus(newStatus);
         appointment = appointmentRepository.save(appointment);
+
+        // Audit status update
+        auditService.logAsync(AuditService.builder()
+            .action("APPOINTMENT_STATUS_UPDATED")
+            .entityType("Appointment")
+            .entityId(String.valueOf(appointmentId))
+            .patientId(appointment.getPatient().getId())
+            .details(String.format("Appointment status updated from %s to %s for %s", 
+                current, newStatus, appointment.getConfirmationNumber()))
+            .metadata(String.format("{\"appointmentId\":%d,\"oldStatus\":\"%s\",\"newStatus\":\"%s\"}", 
+                appointmentId, current, newStatus)));
+
         return mapToAppointmentResponse(appointment);
     }
 

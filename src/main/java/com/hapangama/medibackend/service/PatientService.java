@@ -5,10 +5,8 @@ import com.hapangama.medibackend.dto.PatientProfileResponse;
 import com.hapangama.medibackend.dto.UpdatePatientRequest;
 import com.hapangama.medibackend.exception.BadRequestException;
 import com.hapangama.medibackend.model.Appointment;
-import com.hapangama.medibackend.model.AuditLog;
 import com.hapangama.medibackend.model.Patient;
 import com.hapangama.medibackend.repository.AppointmentRepository;
-import com.hapangama.medibackend.repository.AuditLogRepository;
 import com.hapangama.medibackend.repository.PatientRepository;
 import com.hapangama.medibackend.service.validation.PatientCreationValidator;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +14,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,7 +23,7 @@ public class PatientService {
 
     private final PatientRepository patientRepository;
     private final AppointmentRepository appointmentRepository;
-    private final AuditLogRepository auditLogRepository;
+    private final AuditService auditService;
     // Optional injection to keep unit tests without Spring context working
     @Nullable
     private final PatientCreationValidator patientCreationValidator;
@@ -63,8 +60,16 @@ public class PatientService {
 
         patient = patientRepository.save(patient);
 
-        // Create audit log
-        logAuditAction(patient.getId(), "CREATE_ACCOUNT", "Patient account created", null);
+        // Create audit log using centralized service
+        auditService.logAsync(AuditService.builder()
+            .action("PATIENT_CREATED")
+            .entityType("Patient")
+            .entityId(String.valueOf(patient.getId()))
+            .patientId(patient.getId())
+            .details(String.format("Patient account created: %s (Email: %s, Card: %s)", 
+                patient.getName(), patient.getEmail(), patient.getDigitalHealthCardNumber()))
+            .metadata(String.format("{\"email\":\"%s\",\"phone\":\"%s\"}", 
+                patient.getEmail(), patient.getPhone())));
 
         return mapToPatientProfileResponse(patient);
     }
@@ -72,10 +77,25 @@ public class PatientService {
     public PatientProfileResponse getPatientProfile(Long patientId) {
         Patient patient = patientRepository.findById(patientId)
                 .orElseThrow(() -> new com.hapangama.medibackend.exception.NotFoundException("Patient not found"));
+        
+        // Audit profile access
+        auditService.logAsync(AuditService.builder()
+            .action("PATIENT_PROFILE_VIEWED")
+            .entityType("Patient")
+            .entityId(String.valueOf(patientId))
+            .patientId(patientId)
+            .details("Patient profile viewed"));
+        
         return mapToPatientProfileResponse(patient);
     }
 
     public List<PatientProfileResponse> getAllPatients() {
+        // Audit bulk access
+        auditService.logAsync(AuditService.builder()
+            .action("PATIENTS_LIST_VIEWED")
+            .entityType("Patient")
+            .details("All patients list accessed"));
+        
         return patientRepository.findAll().stream()
                 .map(this::mapToPatientProfileResponse)
                 .collect(Collectors.toList());
@@ -88,12 +108,15 @@ public class PatientService {
 
         // Track changes for audit log
         StringBuilder changes = new StringBuilder();
+        StringBuilder metadata = new StringBuilder("{");
 
         // Validate and update fields
         if (request.getName() != null && !request.getName().trim().isEmpty()) {
             if (!request.getName().equals(patient.getName())) {
                 changes.append("Name changed from '").append(patient.getName())
                        .append("' to '").append(request.getName()).append("'; ");
+                metadata.append("\"name\":{\"old\":\"").append(patient.getName())
+                        .append("\",\"new\":\"").append(request.getName()).append("\"},");
             }
             patient.setName(request.getName());
         }
@@ -108,6 +131,8 @@ public class PatientService {
                 });
                 changes.append("Email changed from '").append(patient.getEmail())
                        .append("' to '").append(request.getEmail()).append("'; ");
+                metadata.append("\"email\":{\"old\":\"").append(patient.getEmail())
+                        .append("\",\"new\":\"").append(request.getEmail()).append("\"},");
                 patient.setEmail(request.getEmail());
             }
         }
@@ -115,6 +140,8 @@ public class PatientService {
         if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
             if (!request.getPhone().equals(patient.getPhone())) {
                 changes.append("Phone changed; ");
+                metadata.append("\"phone\":{\"old\":\"").append(patient.getPhone())
+                        .append("\",\"new\":\"").append(request.getPhone()).append("\"},");
             }
             patient.setPhone(request.getPhone());
         }
@@ -172,7 +199,15 @@ public class PatientService {
 
         // Create audit log if there were changes
         if (changes.length() > 0) {
-            logAuditAction(patient.getId(), "UPDATE_PROFILE", changes.toString(), null);
+            metadata.append("\"changedFields\":").append(changes.length()).append("}");
+            
+            auditService.logAsync(AuditService.builder()
+                .action("PATIENT_PROFILE_UPDATED")
+                .entityType("Patient")
+                .entityId(String.valueOf(patientId))
+                .patientId(patientId)
+                .details(changes.toString())
+                .metadata(metadata.toString()));
         }
 
         return mapToPatientProfileResponse(patient);
@@ -183,8 +218,17 @@ public class PatientService {
         Patient patient = patientRepository.findById(patientId)
                 .orElseThrow(() -> new com.hapangama.medibackend.exception.NotFoundException("Patient not found"));
         
-        logAuditAction(patient.getId(), "DELETE_ACCOUNT", 
-                      "Patient account deleted: " + patient.getName(), null);
+        String patientDetails = String.format("Patient deleted: %s (Email: %s, Card: %s)", 
+            patient.getName(), patient.getEmail(), patient.getDigitalHealthCardNumber());
+        
+        auditService.logAsync(AuditService.builder()
+            .action("PATIENT_DELETED")
+            .entityType("Patient")
+            .entityId(String.valueOf(patientId))
+            .patientId(patientId)
+            .details(patientDetails)
+            .metadata(String.format("{\"name\":\"%s\",\"email\":\"%s\",\"card\":\"%s\"}", 
+                patient.getName(), patient.getEmail(), patient.getDigitalHealthCardNumber())));
 
         List<Appointment> appointmentList = appointmentRepository.findByPatientId(patientId);
         if(!appointmentList.isEmpty()){
@@ -206,16 +250,6 @@ public class PatientService {
         if (digitalHealthCardNumber == null || digitalHealthCardNumber.trim().isEmpty()) {
             throw new BadRequestException("Missing Required Fields: Digital Health Card Number is required");
         }
-    }
-
-    private void logAuditAction(Long patientId, String action, String details, String ipAddress) {
-        AuditLog auditLog = new AuditLog();
-        auditLog.setPatientId(patientId);
-        auditLog.setAction(action);
-        auditLog.setDetails(details);
-        auditLog.setTimestamp(LocalDateTime.now());
-        auditLog.setIpAddress(ipAddress);
-        auditLogRepository.save(auditLog);
     }
 
     private PatientProfileResponse mapToPatientProfileResponse(Patient patient) {

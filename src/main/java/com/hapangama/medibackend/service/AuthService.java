@@ -20,22 +20,41 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PatientRepository patientRepository;
+    private final AuditService auditService;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         // Check if username already exists
         if (userRepository.existsByUsername(request.getUsername())) {
+            auditService.logAsync(AuditService.builder()
+                .action("REGISTRATION_FAILED")
+                .entityType("User")
+                .username(request.getUsername())
+                .details("Registration failed: Username already exists")
+                .metadata(String.format("{\"reason\":\"duplicate_username\",\"username\":\"%s\"}", request.getUsername())));
             throw new RuntimeException("Username already exists");
         }
 
         // Check if email already exists
         if (patientRepository.existsByEmail(request.getEmail())) {
+            auditService.logAsync(AuditService.builder()
+                .action("REGISTRATION_FAILED")
+                .entityType("User")
+                .username(request.getUsername())
+                .details("Registration failed: Email already exists")
+                .metadata(String.format("{\"reason\":\"duplicate_email\",\"email\":\"%s\"}", request.getEmail())));
             throw new RuntimeException("Email already exists");
         }
 
         // Check if digital health card number already exists
         if (patientRepository.existsByDigitalHealthCardNumber(request.getDigitalHealthCardNumber())) {
+            auditService.logAsync(AuditService.builder()
+                .action("REGISTRATION_FAILED")
+                .entityType("User")
+                .username(request.getUsername())
+                .details("Registration failed: Digital health card number already exists")
+                .metadata(String.format("{\"reason\":\"duplicate_card\",\"card\":\"%s\"}", request.getDigitalHealthCardNumber())));
             throw new RuntimeException("Digital health card number already exists");
         }
 
@@ -68,6 +87,19 @@ public class AuthService {
         
         patient = patientRepository.save(patient);
 
+        // Audit successful registration
+        auditService.logAsync(AuditService.builder()
+            .action("USER_REGISTERED")
+            .entityType("User")
+            .entityId(String.valueOf(user.getId()))
+            .userId(user.getId())
+            .username(user.getUsername())
+            .patientId(patient.getId())
+            .details(String.format("New user registered: %s (Role: %s, Patient: %s)", 
+                user.getUsername(), user.getRole(), patient.getName()))
+            .metadata(String.format("{\"userId\":%d,\"patientId\":%d,\"role\":\"%s\",\"email\":\"%s\"}", 
+                user.getId(), patient.getId(), user.getRole(), patient.getEmail())));
+
         return new AuthResponse(
             user.getId(),
             user.getUsername(),
@@ -80,15 +112,39 @@ public class AuthService {
     public AuthResponse login(LoginRequest request) {
         // Find user by username
         User user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new RuntimeException("Invalid username or password"));
+                .orElseThrow(() -> {
+                    auditService.logAsync(AuditService.builder()
+                        .action("LOGIN_FAILED")
+                        .entityType("User")
+                        .username(request.getUsername())
+                        .details("Login failed: Invalid username")
+                        .metadata(String.format("{\"reason\":\"invalid_username\",\"username\":\"%s\"}", request.getUsername())));
+                    return new RuntimeException("Invalid username or password");
+                });
 
         // Check if user is active
         if (!user.getActive()) {
+            auditService.logAsync(AuditService.builder()
+                .action("LOGIN_FAILED")
+                .entityType("User")
+                .entityId(String.valueOf(user.getId()))
+                .userId(user.getId())
+                .username(user.getUsername())
+                .details("Login failed: Account is inactive")
+                .metadata(String.format("{\"reason\":\"inactive_account\",\"userId\":%d}", user.getId())));
             throw new RuntimeException("Account is inactive");
         }
 
         // Verify password
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            auditService.logAsync(AuditService.builder()
+                .action("LOGIN_FAILED")
+                .entityType("User")
+                .entityId(String.valueOf(user.getId()))
+                .userId(user.getId())
+                .username(user.getUsername())
+                .details("Login failed: Invalid password")
+                .metadata(String.format("{\"reason\":\"invalid_password\",\"userId\":%d}", user.getId())));
             throw new RuntimeException("Invalid username or password");
         }
 
@@ -100,6 +156,18 @@ public class AuthService {
                 patientId = patient.getId();
             }
         }
+
+        // Audit successful login
+        auditService.logAsync(AuditService.builder()
+            .action("USER_LOGIN")
+            .entityType("User")
+            .entityId(String.valueOf(user.getId()))
+            .userId(user.getId())
+            .username(user.getUsername())
+            .patientId(patientId)
+            .details(String.format("User logged in: %s (Role: %s)", user.getUsername(), user.getRole()))
+            .metadata(String.format("{\"userId\":%d,\"role\":\"%s\",\"patientId\":%s}", 
+                user.getId(), user.getRole(), patientId)));
 
         return new AuthResponse(
             user.getId(),
